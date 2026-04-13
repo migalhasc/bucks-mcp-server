@@ -15,4 +15,5 @@ export default {
     ],
   },
   testMatch: ["**/__tests__/**/*.test.ts"],
+  setupFiles: ["./jest.setup.ts"],
 };
