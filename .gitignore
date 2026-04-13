@@ -3,3 +3,6 @@ scripts/ralph/progress.txt
 scripts/ralph/.last-branch
 scripts/ralph/archive/
 .DS_Store
+node_modules/
+dist/
+*.env
