@@ -142,10 +142,11 @@ export function registerContactTools(server: McpServer): void {
 
   server.tool(
     "bucks_update_contact",
-    "Atualiza dados de um contato existente (nome, e-mail ou etiquetas) pelo ID. Exige prévia e confirmação. Use bucks_find_contact_by_phone para obter o ID do contato.",
+    "Atualiza dados de um contato existente (nome, telefone, e-mail ou etiquetas) pelo ID. Exige prévia e confirmação. Atualização de telefone é ação sensível — exige prévia reforçada. Use bucks_find_contact_by_phone para obter o ID do contato.",
     {
       id: z.string().min(1).describe("ID do contato"),
       name: z.string().min(1).optional().describe("Novo nome"),
+      phone: z.string().optional().describe("Novo telefone em formato internacional (ex: +5511999999999). Ação sensível."),
       email: z.string().email().optional().describe("Novo e-mail"),
       tags: z.array(z.string()).optional().describe("Nova lista de etiquetas (substitui as existentes)"),
       confirmed: z.boolean().optional().describe("true para confirmar e executar a atualização"),
@@ -160,11 +161,12 @@ export function registerContactTools(server: McpServer): void {
 
       const campos: Record<string, unknown> = {};
       if (args.name) campos["nome"] = args.name;
+      if (args.phone) campos["telefone"] = args.phone;
       if (args.email) campos["email"] = args.email;
       if (args.tags) campos["etiquetas"] = args.tags;
 
       if (Object.keys(campos).length === 0) {
-        return buildError("Nenhum campo fornecido para atualização. Informe ao menos nome, email ou tags.");
+        return buildError("Nenhum campo fornecido para atualização. Informe ao menos nome, telefone, email ou tags.");
       }
 
       if (!args.confirmed) {
@@ -172,12 +174,16 @@ export function registerContactTools(server: McpServer): void {
           acao: "Atualizar contato",
           alvo: `ID: ${args.id}`,
           campos,
+          aviso: args.phone
+            ? "Atualização de telefone é uma ação sensível. O número do contato será alterado permanentemente."
+            : undefined,
         });
       }
 
       try {
         const updated = await contacts.update(args.id, {
           name: args.name,
+          phone: args.phone,
           email: args.email,
           tags: args.tags,
         });

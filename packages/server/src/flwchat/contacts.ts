@@ -42,6 +42,7 @@ export interface CreateContactParams {
 
 export interface UpdateContactParams {
   name?: string;
+  phone?: string;
   email?: string;
   tags?: string[];
 }
