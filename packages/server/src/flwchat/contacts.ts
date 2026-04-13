@@ -1,6 +1,6 @@
 /**
  * FlwChat contacts domain module.
- * Wraps the central client for contact read operations.
+ * Wraps the central client for contact read and write operations.
  */
 
 import { flwchat, PagedResult } from "./client.js";
@@ -31,6 +31,23 @@ export interface SearchContactsParams {
   tags?: string[];
   page?: number;
   pageSize?: number;
+}
+
+export interface CreateContactParams {
+  name: string;
+  phone: string;
+  email?: string;
+  tags?: string[];
+}
+
+export interface UpdateContactParams {
+  name?: string;
+  email?: string;
+  tags?: string[];
+}
+
+export interface UpdateTagsParams {
+  tags: string[];
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -120,5 +137,20 @@ export const contacts = {
       (raw, pg, ps) => extractPage(raw, pg, ps),
     );
     return { contacts: all };
+  },
+
+  /** Create a new contact. */
+  async create(params: CreateContactParams): Promise<Contact> {
+    return flwchat.post<Contact>("/core/v1/contact", params);
+  },
+
+  /** Update a contact by ID. Sensitive if phone is being changed. */
+  async update(id: string, params: UpdateContactParams): Promise<Contact> {
+    return flwchat.put<Contact>(`/core/v2/contact/${encodeURIComponent(id)}`, params);
+  },
+
+  /** Update tags for a contact by ID. Replaces existing tags. */
+  async updateTags(id: string, tags: string[]): Promise<Contact> {
+    return flwchat.post<Contact>(`/core/v1/contact/${encodeURIComponent(id)}/tags`, { tags });
   },
 };

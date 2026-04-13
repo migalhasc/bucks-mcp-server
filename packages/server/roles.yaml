@@ -16,7 +16,7 @@ roles:
       # contacts write
       - bucks_create_contact
       - bucks_update_contact
-      - bucks_update_contact_labels
+      - bucks_update_contact_tags
       # sessions read
       - bucks_list_sessions
       - bucks_get_session
