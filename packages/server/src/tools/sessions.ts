@@ -142,6 +142,187 @@ export function registerSessionTools(server: McpServer): void {
     },
   );
 
+  // ── bucks_assign_session ────────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_assign_session",
+    "Atribui uma sessão a um agente específico. Exige prévia e confirmação.",
+    {
+      sessionId: z.string().min(1).describe("ID da sessão"),
+      agentId: z.string().min(1).describe("ID do agente a ser responsável"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_assign_session");
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Atribuir sessão",
+          alvo: `Sessão ID: ${args.sessionId}`,
+          campos: { agente: args.agentId },
+        });
+      }
+      try {
+        const result = await sessions.assign({ sessionId: args.sessionId, agentId: args.agentId });
+        return buildSuccess("Sessão atribuída com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Sessão '${args.sessionId}' não encontrada.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_transfer_session ──────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_transfer_session",
+    "Transfere uma sessão para outro agente ou departamento. Ação sensível — exige prévia reforçada e confirmação.",
+    {
+      sessionId: z.string().min(1).describe("ID da sessão"),
+      agentId: z.string().optional().describe("ID do agente de destino"),
+      departmentId: z.string().optional().describe("ID do departamento de destino"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_transfer_session");
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.agentId && !args.departmentId) {
+        return buildError("Informe ao menos agentId ou departmentId para a transferência.");
+      }
+      if (!args.confirmed) {
+        const campos: Record<string, unknown> = {};
+        if (args.agentId) campos["agente destino"] = args.agentId;
+        if (args.departmentId) campos["departamento destino"] = args.departmentId;
+        return buildPreview({
+          acao: "Transferir sessão",
+          alvo: `Sessão ID: ${args.sessionId}`,
+          campos,
+          aviso: "A sessão será removida do atendente atual e transferida.",
+        });
+      }
+      try {
+        const result = await sessions.transfer({
+          sessionId: args.sessionId,
+          agentId: args.agentId,
+          departmentId: args.departmentId,
+        });
+        return buildSuccess("Sessão transferida com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Sessão '${args.sessionId}' não encontrada.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_set_session_status ────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_set_session_status",
+    "Altera o status de uma sessão (ex: open, pending, resolved). Exige prévia e confirmação.",
+    {
+      sessionId: z.string().min(1).describe("ID da sessão"),
+      status: z.string().min(1).describe("Novo status (ex: open, pending, resolved)"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_set_session_status");
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Alterar status da sessão",
+          alvo: `Sessão ID: ${args.sessionId}`,
+          campos: { "novo status": args.status },
+        });
+      }
+      try {
+        const result = await sessions.setStatus({ sessionId: args.sessionId, status: args.status });
+        return buildSuccess("Status atualizado com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Sessão '${args.sessionId}' não encontrada.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_close_session ─────────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_close_session",
+    "Conclui (encerra) uma sessão. Ação sensível e irreversível — exige prévia reforçada e confirmação.",
+    {
+      sessionId: z.string().min(1).describe("ID da sessão a concluir"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_close_session");
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Concluir sessão",
+          alvo: `Sessão ID: ${args.sessionId}`,
+          aviso: "A sessão será encerrada. Esta ação não pode ser desfeita.",
+        });
+      }
+      try {
+        const result = await sessions.complete(args.sessionId);
+        return buildSuccess("Sessão concluída com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Sessão '${args.sessionId}' não encontrada.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_add_session_note ──────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_add_session_note",
+    "Adiciona uma nota interna a uma sessão (não visível ao cliente). Exige prévia e confirmação.",
+    {
+      sessionId: z.string().min(1).describe("ID da sessão"),
+      text: z.string().min(1).describe("Texto da nota interna"),
+      confirmed: z.boolean().optional().describe("true para confirmar e salvar a nota"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_add_session_note");
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Adicionar nota interna",
+          alvo: `Sessão ID: ${args.sessionId}`,
+          campos: { nota: args.text },
+        });
+      }
+      try {
+        const result = await sessions.addNote({ sessionId: args.sessionId, text: args.text });
+        return buildSuccess("Nota adicionada com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Sessão '${args.sessionId}' não encontrada.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
   // ── bucks_reply_session ─────────────────────────────────────────────────────
 
   server.tool(

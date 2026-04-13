@@ -109,6 +109,29 @@ export interface ReplySessionParams {
   text: string;
 }
 
+export interface AssignSessionParams {
+  sessionId: string;
+  agentId: string;
+}
+
+export interface TransferSessionParams {
+  sessionId: string;
+  /** Target agent ID */
+  agentId?: string;
+  /** Target department/team ID */
+  departmentId?: string;
+}
+
+export interface SetSessionStatusParams {
+  sessionId: string;
+  status: string;
+}
+
+export interface AddSessionNoteParams {
+  sessionId: string;
+  text: string;
+}
+
 export interface SendMessageResponse {
   id?: string;
   messageId?: string;
@@ -173,6 +196,49 @@ export const sessions = {
   /** Get a single session by ID. */
   async getById(id: string): Promise<Session> {
     return flwchat.get<Session>(`/core/v2/session/${encodeURIComponent(id)}`);
+  },
+
+  /** Assign a session to a specific agent. */
+  async assign(params: AssignSessionParams): Promise<Session> {
+    return flwchat.put<Session>(
+      `/core/v1/session/${encodeURIComponent(params.sessionId)}/assignee`,
+      { agentId: params.agentId },
+    );
+  },
+
+  /** Transfer a session to another agent or department. Sensitive action. */
+  async transfer(params: TransferSessionParams): Promise<Session> {
+    const body: Record<string, string> = {};
+    if (params.agentId) body["agentId"] = params.agentId;
+    if (params.departmentId) body["departmentId"] = params.departmentId;
+    return flwchat.put<Session>(
+      `/core/v1/session/${encodeURIComponent(params.sessionId)}/transfer`,
+      body,
+    );
+  },
+
+  /** Change the status of a session. */
+  async setStatus(params: SetSessionStatusParams): Promise<Session> {
+    return flwchat.put<Session>(
+      `/core/v1/session/${encodeURIComponent(params.sessionId)}/status`,
+      { status: params.status },
+    );
+  },
+
+  /** Complete/close a session. Sensitive action. */
+  async complete(sessionId: string): Promise<Session> {
+    return flwchat.put<Session>(
+      `/core/v1/session/${encodeURIComponent(sessionId)}/complete`,
+      {},
+    );
+  },
+
+  /** Add an internal note to a session. */
+  async addNote(params: AddSessionNoteParams): Promise<unknown> {
+    return flwchat.post(
+      `/core/v1/session/${encodeURIComponent(params.sessionId)}/note`,
+      { text: params.text },
+    );
   },
 
   /**
