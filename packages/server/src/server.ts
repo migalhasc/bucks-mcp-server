@@ -5,12 +5,17 @@ import { randomUUID } from "node:crypto";
 import { logger } from "./logger.js";
 import { authenticate, AuthError } from "./auth.js";
 import { resolveRole, RbacError } from "./rbac.js";
+import { requestContext } from "./request-context.js";
+import { registerContactTools } from "./tools/contacts.js";
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({
     name: "bucks-mcp-server",
     version: "0.1.0",
   });
+
+  registerContactTools(server);
+
   return server;
 }
 
@@ -62,7 +67,10 @@ export function createApp(mcpServer: McpServer): express.Application {
       });
 
       await mcpServer.connect(transport);
-      await transport.handleRequest(req, res, req.body);
+      await requestContext.run(
+        { req, userEmail, userRole },
+        () => transport.handleRequest(req, res, req.body),
+      );
     } catch (err) {
       logger.error({ requestId, err }, "mcp request error");
       if (!res.headersSent) {
