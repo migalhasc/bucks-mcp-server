@@ -3,6 +3,8 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import express, { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 import { logger } from "./logger.js";
+import { authenticate, AuthError } from "./auth.js";
+import { resolveRole, RbacError } from "./rbac.js";
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({
@@ -25,6 +27,28 @@ export function createApp(mcpServer: McpServer): express.Application {
   app.post("/mcp", async (req: Request, res: Response) => {
     const requestId = randomUUID();
     logger.info({ requestId, method: req.method, path: req.path }, "mcp request");
+
+    // Authenticate and resolve role before handling the MCP request
+    let userEmail: string;
+    let userRole: string;
+    try {
+      userEmail = await authenticate(req);
+      userRole = resolveRole(userEmail);
+    } catch (err) {
+      if (err instanceof AuthError) {
+        logger.warn({ requestId, err: err.message }, "auth failed");
+        res.status(err.statusCode).json({ error: err.message });
+        return;
+      }
+      if (err instanceof RbacError) {
+        logger.warn({ requestId, err: err.message }, "rbac denied");
+        res.status(403).json({ error: err.message });
+        return;
+      }
+      throw err;
+    }
+
+    logger.info({ requestId, userEmail, userRole }, "authenticated");
 
     try {
       const transport = new StreamableHTTPServerTransport({

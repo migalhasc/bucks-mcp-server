@@ -6,6 +6,13 @@ const envSchema = z.object({
   LOG_LEVEL: z.string().default("info"),
   FLWCHAT_API_URL: z.string().url().optional(),
   FLWCHAT_SERVICE_TOKEN: z.string().optional(),
+  // Auth
+  AUTH_MODE: z.enum(["jwt", "static"]).default("jwt"),
+  JWKS_URI: z.string().url().optional(),
+  JWT_ISSUER: z.string().optional(),
+  JWT_AUDIENCE: z.string().optional(),
+  /** Comma-separated email:token pairs for static auth mode, e.g. "user@x.com:tok1,admin@x.com:tok2" */
+  STATIC_TOKENS: z.string().optional(),
 });
 
 function loadConfig() {

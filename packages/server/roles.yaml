@@ -1,0 +1,60 @@
+# RBAC configuration for bucks-mcp-server v1
+# Map user emails to roles and define tool permissions per role.
+# Roles: commercial, cs, admin
+
+users: {}
+  # example@blankschool.com.br: commercial
+  # cs@blankschool.com.br: cs
+  # admin@blankschool.com.br: admin
+
+roles:
+  commercial:
+    allowed_tools:
+      # contacts read
+      - bucks_find_contact_by_phone
+      - bucks_search_contacts
+      # contacts write
+      - bucks_create_contact
+      - bucks_update_contact
+      - bucks_update_contact_labels
+      # sessions read
+      - bucks_list_sessions
+      - bucks_get_session
+      - bucks_list_messages
+      # session reply
+      - bucks_reply_session
+      # outbound
+      - bucks_send_outbound
+      # crm read
+      - bucks_list_boards
+      - bucks_list_cards
+      - bucks_get_card
+      # crm write
+      - bucks_create_card
+      - bucks_move_card
+      - bucks_add_card_note
+
+  cs:
+    allowed_tools:
+      # contacts read
+      - bucks_find_contact_by_phone
+      - bucks_search_contacts
+      # sessions read
+      - bucks_list_sessions
+      - bucks_get_session
+      - bucks_list_messages
+      # session reply
+      - bucks_reply_session
+      # session ops
+      - bucks_assign_session
+      - bucks_transfer_session
+      - bucks_set_session_status
+      - bucks_close_session
+      - bucks_add_session_note
+      # crm read
+      - bucks_list_boards
+      - bucks_list_cards
+      - bucks_get_card
+
+  admin:
+    allowed_tools: "*"  # all tools
