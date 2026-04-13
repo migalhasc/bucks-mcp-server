@@ -82,6 +82,29 @@ function extractCardPage(raw: unknown, page: number, pageSize: number): PagedRes
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
+export interface CreateCardParams {
+  panelId: string;
+  stageId: string;
+  title?: string;
+  contactId?: string;
+  agentId?: string;
+  value?: number;
+  tags?: string[];
+}
+
+export interface UpdateCardParams {
+  title?: string;
+  stageId?: string;
+  agentId?: string;
+  value?: number;
+  tags?: string[];
+}
+
+export interface AddCardNoteParams {
+  cardId: string;
+  text: string;
+}
+
 export const crm = {
   /** List all panels (boards). */
   async listPanels(): Promise<Panel[]> {
@@ -132,5 +155,23 @@ export const crm = {
     if (Array.isArray(raw)) return raw as CardNote[];
     const r = raw as { notes?: CardNote[]; data?: CardNote[] };
     return r.notes ?? r.data ?? [];
+  },
+
+  /** Create a new card in a panel. */
+  async createCard(params: CreateCardParams): Promise<Card> {
+    return flwchat.post<Card>("/core/v1/panel/card", params);
+  },
+
+  /** Update a card (includes moving between stages). */
+  async updateCard(id: string, params: UpdateCardParams): Promise<Card> {
+    return flwchat.put<Card>(`/core/v2/panel/card/${encodeURIComponent(id)}`, params);
+  },
+
+  /** Add a note to a card. */
+  async addCardNote(params: AddCardNoteParams): Promise<CardNote> {
+    return flwchat.post<CardNote>(
+      `/core/v1/panel/card/${encodeURIComponent(params.cardId)}/note`,
+      { text: params.text },
+    );
   },
 };
