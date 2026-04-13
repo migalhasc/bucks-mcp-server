@@ -104,6 +104,18 @@ function isoHoursAgo(hours: number): string {
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
+export interface ReplySessionParams {
+  sessionId: string;
+  text: string;
+}
+
+export interface SendMessageResponse {
+  id?: string;
+  messageId?: string;
+  status?: string;
+  [key: string]: unknown;
+}
+
 export const sessions = {
   /**
    * List sessions with optional filters.
@@ -161,6 +173,17 @@ export const sessions = {
   /** Get a single session by ID. */
   async getById(id: string): Promise<Session> {
     return flwchat.get<Session>(`/core/v2/session/${encodeURIComponent(id)}`);
+  },
+
+  /**
+   * Send a reply (text message) to an existing session.
+   * This is a write operation — not retried on failure.
+   */
+  async reply(params: ReplySessionParams): Promise<SendMessageResponse> {
+    return flwchat.post<SendMessageResponse>(
+      `/core/v1/session/${encodeURIComponent(params.sessionId)}/message`,
+      { text: params.text },
+    );
   },
 
   /**

@@ -9,6 +9,7 @@ import { sessions, DEFAULT_RECENCY_HOURS, DEFAULT_RECENT_LIMIT, DEFAULT_LIST_LIM
 import { FlwChatNotFoundError } from "../flwchat/client.js";
 import { assertToolAllowed } from "../rbac.js";
 import { requestContext } from "../request-context.js";
+import { buildPreview, buildSuccess, buildError } from "../confirmation.js";
 
 function mcpError(message: string) {
   return { content: [{ type: "text" as const, text: message }], isError: true };
@@ -137,6 +138,47 @@ export function registerSessionTools(server: McpServer): void {
           return mcpError(`Sessão com ID '${args.sessionId}' não encontrada.`);
         }
         return mcpError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_reply_session ─────────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_reply_session",
+    "Envia uma resposta de texto dentro de uma sessão existente. Exige prévia e confirmação explícita. Para iniciar uma conversa nova use bucks_send_outbound.",
+    {
+      sessionId: z.string().min(1).describe("ID da sessão a responder"),
+      text: z.string().min(1).describe("Texto da mensagem a enviar"),
+      confirmed: z.boolean().optional().describe("true para confirmar e enviar a mensagem"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_reply_session");
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Responder sessão",
+          alvo: `Sessão ID: ${args.sessionId}`,
+          campos: { mensagem: args.text },
+        });
+      }
+
+      try {
+        const result = await sessions.reply({
+          sessionId: args.sessionId,
+          text: args.text,
+        });
+        return buildSuccess("Mensagem enviada com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) {
+          return buildError(`Sessão com ID '${args.sessionId}' não encontrada.`);
+        }
+        return buildError((err as Error).message);
       }
     },
   );
