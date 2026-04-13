@@ -7,6 +7,7 @@ import { authenticate, AuthError } from "./auth.js";
 import { resolveRole, RbacError } from "./rbac.js";
 import { requestContext } from "./request-context.js";
 import { registerContactTools } from "./tools/contacts.js";
+import { registerSessionTools } from "./tools/sessions.js";
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({
@@ -15,6 +16,7 @@ export function createMcpServer(): McpServer {
   });
 
   registerContactTools(server);
+  registerSessionTools(server);
 
   return server;
 }
