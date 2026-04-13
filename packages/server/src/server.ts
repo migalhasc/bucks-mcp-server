@@ -8,6 +8,7 @@ import { resolveRole, RbacError } from "./rbac.js";
 import { requestContext } from "./request-context.js";
 import { registerContactTools } from "./tools/contacts.js";
 import { registerSessionTools } from "./tools/sessions.js";
+import { registerCrmReadTools } from "./tools/crm.js";
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({
@@ -17,6 +18,7 @@ export function createMcpServer(): McpServer {
 
   registerContactTools(server);
   registerSessionTools(server);
+  registerCrmReadTools(server);
 
   return server;
 }
