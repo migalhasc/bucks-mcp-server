@@ -1,15 +1,26 @@
 /**
- * MCP tool handlers for session and message read operations.
- * Tools: bucks_list_sessions, bucks_get_session, bucks_list_messages
+ * MCP tool handlers for session, message and outbound operations.
+ * Tools: bucks_list_sessions, bucks_get_session, bucks_list_messages,
+ *        bucks_reply_session, bucks_send_outbound, bucks_assign_session,
+ *        bucks_transfer_session, bucks_set_session_status,
+ *        bucks_close_session, bucks_add_session_note
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { sessions, DEFAULT_RECENCY_HOURS, DEFAULT_RECENT_LIMIT, DEFAULT_LIST_LIMIT } from "../flwchat/sessions.js";
+import { contacts } from "../flwchat/contacts.js";
 import { FlwChatNotFoundError } from "../flwchat/client.js";
 import { assertToolAllowed } from "../rbac.js";
 import { requestContext } from "../request-context.js";
 import { buildPreview, buildSuccess, buildError } from "../confirmation.js";
+import {
+  assertOutboundAllowed,
+  validateOutboundInput,
+  buildOutboundPreview,
+  OutboundPolicyError,
+} from "../outbound-policy.js";
+import { config } from "../config.js";
 
 function mcpError(message: string) {
   return { content: [{ type: "text" as const, text: message }], isError: true };
@@ -359,6 +370,91 @@ export function registerSessionTools(server: McpServer): void {
         if (err instanceof FlwChatNotFoundError) {
           return buildError(`Sessão com ID '${args.sessionId}' não encontrada.`);
         }
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_send_outbound ─────────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_send_outbound",
+    "Inicia uma mensagem outbound para um número de telefone. Suporta contato existente ou criação de contato novo no mesmo fluxo. Ação sensível — exige prévia reforçada e confirmação. Apenas papéis 'commercial' e 'admin' podem usar esta tool.",
+    {
+      phone: z.string().describe("Telefone do destinatário em formato internacional (ex: +5511999999999)"),
+      text: z.string().min(1).describe("Texto da mensagem outbound"),
+      channel: z.string().optional().describe("ID do canal de envio (usa canal padrão se omitido)"),
+      newContact: z
+        .object({
+          name: z.string().min(1).describe("Nome completo do novo contato"),
+          origin: z.string().min(1).describe("Origem do contato (ex: evento, site, indicação)"),
+          tags: z.array(z.string()).optional().describe("Etiquetas opcionais para o novo contato"),
+        })
+        .optional()
+        .describe("Preencha para criar um novo contato antes de enviar. Omita se o contato já existe."),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar o envio"),
+    },
+    async (args) => {
+      // Role check
+      const ctx = (() => {
+        try { return getContext(); } catch { return null; }
+      })();
+      if (!ctx) return buildError("Contexto de requisição não disponível.");
+
+      try {
+        assertOutboundAllowed(ctx.userRole as "commercial" | "cs" | "admin");
+        assertToolAllowed(ctx.userRole as "commercial" | "cs" | "admin", "bucks_send_outbound");
+      } catch (err) {
+        if (err instanceof OutboundPolicyError) return buildError(err.message);
+        return buildError((err as Error).message);
+      }
+
+      const defaultChannel = config.DEFAULT_CHANNEL;
+      const input = {
+        phone: args.phone,
+        channel: args.channel,
+        defaultChannel,
+        message: args.text,
+        newContact: args.newContact,
+      };
+
+      // Validate input
+      const validationError = validateOutboundInput(input);
+      if (validationError) return validationError;
+
+      const resolvedChannel = (args.channel ?? defaultChannel)!;
+      const contactName = args.newContact?.name ?? args.phone;
+
+      // Preview (unconfirmed)
+      if (!args.confirmed) {
+        return buildOutboundPreview(input, contactName);
+      }
+
+      // Execute
+      try {
+        // If new contact, create it first
+        if (args.newContact) {
+          await contacts.create({
+            name: args.newContact.name,
+            phone: args.phone,
+            tags: args.newContact.origin
+              ? [args.newContact.origin, ...(args.newContact.tags ?? [])]
+              : args.newContact.tags,
+          });
+        }
+
+        const result = await sessions.sendOutbound({
+          phone: args.phone,
+          channel: resolvedChannel,
+          text: args.text,
+        });
+
+        const successMsg = args.newContact
+          ? `Contato criado e mensagem outbound enviada para ${contactName} (${args.phone}).`
+          : `Mensagem outbound enviada para ${contactName} (${args.phone}).`;
+
+        return buildSuccess(successMsg, result);
+      } catch (err) {
         return buildError((err as Error).message);
       }
     },

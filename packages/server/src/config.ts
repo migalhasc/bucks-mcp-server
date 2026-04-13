@@ -13,6 +13,10 @@ const envSchema = z.object({
   JWT_AUDIENCE: z.string().optional(),
   /** Comma-separated email:token pairs for static auth mode, e.g. "user@x.com:tok1,admin@x.com:tok2" */
   STATIC_TOKENS: z.string().optional(),
+  /** Default channel ID for outbound messages */
+  DEFAULT_CHANNEL: z.string().optional(),
+  /** Default CRM board/panel ID */
+  DEFAULT_BOARD: z.string().optional(),
 });
 
 function loadConfig() {

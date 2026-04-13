@@ -1,6 +1,6 @@
 /**
  * FlwChat sessions domain module.
- * Covers: list sessions, get session, list messages for a session.
+ * Covers: list sessions, get session, list messages, outbound send.
  */
 
 import { flwchat, PagedResult } from "./client.js";
@@ -139,6 +139,20 @@ export interface SendMessageResponse {
   [key: string]: unknown;
 }
 
+export interface SendOutboundParams {
+  phone: string;
+  /** Channel ID to send through */
+  channel: string;
+  text: string;
+}
+
+export interface OutboundSendResponse {
+  id?: string;
+  messageId?: string;
+  status?: string;
+  [key: string]: unknown;
+}
+
 export const sessions = {
   /**
    * List sessions with optional filters.
@@ -250,6 +264,19 @@ export const sessions = {
       `/core/v1/session/${encodeURIComponent(params.sessionId)}/message`,
       { text: params.text },
     );
+  },
+
+  /**
+   * Send an outbound message to a phone number via a specific channel.
+   * Uses POST /chat/v1/message/send (async queue).
+   * Call contacts.create() first if creating a new contact in the same flow.
+   */
+  async sendOutbound(params: SendOutboundParams): Promise<OutboundSendResponse> {
+    return flwchat.post<OutboundSendResponse>("/chat/v1/message/send", {
+      phone: params.phone,
+      channel: params.channel,
+      text: params.text,
+    });
   },
 
   /**

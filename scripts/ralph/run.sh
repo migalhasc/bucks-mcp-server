@@ -7,6 +7,7 @@ RALPH_DIR="$ROOT_DIR/scripts/ralph"
 SELECTED_TOOL="${RALPH_TOOL:-claude}"
 TOOL_ARG_PROVIDED="false"
 USE_DOCKER="false"
+PASSTHROUGH_ARGS=()
 
 show_help() {
   cat <<'EOF'
@@ -120,7 +121,7 @@ fi
 
 # Add default tool flag if not explicitly provided
 if [[ "$TOOL_ARG_PROVIDED" == "false" ]]; then
-  PASSTHROUGH_ARGS=(--tool "$SELECTED_TOOL" "${PASSTHROUGH_ARGS[@]}")
+  PASSTHROUGH_ARGS=(--tool "$SELECTED_TOOL" "${PASSTHROUGH_ARGS[@]+"${PASSTHROUGH_ARGS[@]}"}")
 fi
 
-exec "$RALPH_DIR/ralph.sh" "${PASSTHROUGH_ARGS[@]}"
+exec "$RALPH_DIR/ralph.sh" "${PASSTHROUGH_ARGS[@]+"${PASSTHROUGH_ARGS[@]}"}"
