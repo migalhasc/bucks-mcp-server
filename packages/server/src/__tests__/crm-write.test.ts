@@ -53,10 +53,10 @@ describe("crm.createCard", () => {
       panelId: "p1",
       stepId: "s1",
       title: "Lead X",
-      contactId: "ct1",
-      agentId: "ag1",
-      value: 1500,
-      tags: ["hot"],
+      contactIds: ["ct1"],
+      responsibleUserId: "ag1",
+      monetaryAmount: 1500,
+      tagIds: ["hot"],
     });
     expect(result).toMatchObject({ id: "c1", stageId: "s1" });
   });

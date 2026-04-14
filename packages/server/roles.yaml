@@ -55,8 +55,10 @@ roles:
       - bucks_get_card
       # crm write
       - bucks_create_card
+      - bucks_update_card
       - bucks_move_card
       - bucks_add_card_note
+      - bucks_delete_card_note
 
   cs:
     allowed_tools:

@@ -224,6 +224,11 @@ export const flwchat = {
     return executeRequest({ method: "PATCH", path, body, safe: false }) as Promise<T>;
   },
 
+  /** DELETE — not retried */
+  delete<T = unknown>(path: string): Promise<T> {
+    return executeRequest({ method: "DELETE", path, safe: false }) as Promise<T>;
+  },
+
   /**
    * Iterate pages automatically (GET only, safe).
    * Stops when hasMore is false or MAX_AUTO_PAGES is reached.
