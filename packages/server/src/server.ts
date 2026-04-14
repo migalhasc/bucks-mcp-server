@@ -10,6 +10,7 @@ import { registerContactTools } from "./tools/contacts.js";
 import { registerSessionTools } from "./tools/sessions.js";
 import { registerCrmTools } from "./tools/crm.js";
 import { authRouter } from "./routes/auth.js";
+import { oauthRouter } from "./routes/oauth.js";
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({
@@ -32,6 +33,9 @@ export function createApp(mcpServer: McpServer): express.Application {
   app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "ok", service: "bucks-mcp-server", version: "0.1.0" });
   });
+
+  // OAuth routes (Claude Desktop compatibility)
+  app.use(oauthRouter);
 
   // Auth routes (login page + POST /auth/login)
   app.use(authRouter);
