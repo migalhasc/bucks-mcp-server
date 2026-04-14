@@ -9,6 +9,7 @@ import { requestContext } from "./request-context.js";
 import { registerContactTools } from "./tools/contacts.js";
 import { registerSessionTools } from "./tools/sessions.js";
 import { registerCrmTools } from "./tools/crm.js";
+import { authRouter } from "./routes/auth.js";
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({
@@ -32,6 +33,9 @@ export function createApp(mcpServer: McpServer): express.Application {
     res.json({ status: "ok", service: "bucks-mcp-server", version: "0.1.0" });
   });
 
+  // Auth routes (login page + POST /auth/login)
+  app.use(authRouter);
+
   // Stateless MCP endpoint — new transport per request
   app.post("/mcp", async (req: Request, res: Response) => {
     const requestId = randomUUID();
@@ -40,13 +44,16 @@ export function createApp(mcpServer: McpServer): express.Application {
     // Authenticate and resolve role before handling the MCP request
     let userEmail: string;
     let userRole: string;
+    let flwchatToken: string | undefined;
     try {
-      userEmail = await authenticate(req);
+      const auth = await authenticate(req);
+      userEmail = auth.email;
+      flwchatToken = auth.flwchatToken;
       userRole = resolveRole(userEmail);
     } catch (err) {
       if (err instanceof AuthError) {
         logger.warn({ requestId, err: err.message }, "auth failed");
-        res.status(err.statusCode).json({ error: err.message });
+        res.status(err.statusCode).json({ error: err.message, loginUrl: err.loginUrl });
         return;
       }
       if (err instanceof RbacError) {
@@ -72,7 +79,7 @@ export function createApp(mcpServer: McpServer): express.Application {
 
       await mcpServer.connect(transport);
       await requestContext.run(
-        { req, userEmail, userRole },
+        { req, userEmail, userRole, flwchatToken },
         () => transport.handleRequest(req, res, req.body),
       );
     } catch (err) {

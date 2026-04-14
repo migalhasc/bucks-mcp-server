@@ -42,7 +42,7 @@ describe("sessions.list", () => {
     const result = await sessions.list({});
 
     expect(mockFetchAllPages).toHaveBeenCalledWith(
-      "/core/v2/session",
+      "/chat/v2/session",
       expect.objectContaining({ pageSize: DEFAULT_LIST_LIMIT }),
       DEFAULT_LIST_LIMIT,
       expect.any(Function),
@@ -56,7 +56,7 @@ describe("sessions.list", () => {
     const result = await sessions.list({ page: 2, pageSize: 10 });
 
     expect(mockGet).toHaveBeenCalledWith(
-      "/core/v2/session",
+      "/chat/v2/session",
       expect.objectContaining({ page: 2, pageSize: 10 }),
     );
     expect(result.total).toBe(10);
@@ -66,7 +66,7 @@ describe("sessions.list", () => {
     mockFetchAllPages.mockResolvedValueOnce([]);
     await sessions.list({ contactId: "c1" });
     expect(mockFetchAllPages).toHaveBeenCalledWith(
-      "/core/v2/session",
+      "/chat/v2/session",
       expect.objectContaining({ contactId: "c1" }),
       expect.any(Number),
       expect.any(Function),
@@ -85,7 +85,7 @@ describe("sessions.listRecent", () => {
     await sessions.listRecent({ hours: 12, limit: 5 });
 
     expect(mockGet).toHaveBeenCalledWith(
-      "/core/v2/session",
+      "/chat/v2/session",
       expect.objectContaining({ pageSize: 5, page: 1 }),
     );
     const callArgs = mockGet.mock.calls[0][1] as Record<string, unknown>;
@@ -117,7 +117,7 @@ describe("sessions.getById", () => {
 
     const result = await sessions.getById("abc");
 
-    expect(mockGet).toHaveBeenCalledWith("/core/v2/session/abc");
+    expect(mockGet).toHaveBeenCalledWith("/chat/v2/session/abc");
     expect(result).toEqual(session);
   });
 
@@ -151,7 +151,7 @@ describe("sessions.listMessages", () => {
     const result = await sessions.listMessages({ sessionId: "s1", after });
 
     expect(mockGet).toHaveBeenCalledWith(
-      "/core/v1/session/s1/message",
+      "/chat/v1/session/s1/message",
       expect.objectContaining({ after }),
     );
     expect(result.messages).toHaveLength(1);

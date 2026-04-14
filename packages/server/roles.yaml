@@ -2,10 +2,14 @@
 # Map user emails to roles and define tool permissions per role.
 # Roles: commercial, cs, admin
 
-users: {}
-  # example@blankschool.com.br: commercial
-  # cs@blankschool.com.br: cs
-  # admin@blankschool.com.br: admin
+users:
+  miguel@blankschool.com.br:
+    role: admin
+    flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
+  # Para adicionar usuários:
+  # fulano@blankschool.com.br:
+  #   role: commercial          # commercial | cs | admin
+  #   flwchatToken: pn_xxx      # token permanente do usuário no FlwChat
 
 roles:
   commercial:

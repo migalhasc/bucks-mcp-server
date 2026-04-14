@@ -36,13 +36,13 @@ const { sessions } = await import("../flwchat/sessions.js");
 describe("sessions.assign", () => {
   beforeEach(() => { mockPut.mockReset(); });
 
-  it("calls PUT /core/v1/session/{id}/assignee with agentId", async () => {
+  it("calls PUT /chat/v1/session/{id}/assignee with agentId", async () => {
     const session = { id: "s1", agentId: "ag1" };
     mockPut.mockResolvedValueOnce(session);
 
     const result = await sessions.assign({ sessionId: "s1", agentId: "ag1" });
 
-    expect(mockPut).toHaveBeenCalledWith("/core/v1/session/s1/assignee", { agentId: "ag1" });
+    expect(mockPut).toHaveBeenCalledWith("/chat/v1/session/s1/assignee", { agentId: "ag1" });
     expect(result).toEqual(session);
   });
 
@@ -57,12 +57,12 @@ describe("sessions.assign", () => {
 describe("sessions.transfer", () => {
   beforeEach(() => { mockPut.mockReset(); });
 
-  it("calls PUT /core/v1/session/{id}/transfer with agentId", async () => {
+  it("calls PUT /chat/v1/session/{id}/transfer with agentId", async () => {
     mockPut.mockResolvedValueOnce({ id: "s1" });
 
     await sessions.transfer({ sessionId: "s1", agentId: "ag2" });
 
-    expect(mockPut).toHaveBeenCalledWith("/core/v1/session/s1/transfer", { agentId: "ag2" });
+    expect(mockPut).toHaveBeenCalledWith("/chat/v1/session/s1/transfer", { agentId: "ag2" });
   });
 
   it("calls PUT with departmentId only", async () => {
@@ -70,7 +70,7 @@ describe("sessions.transfer", () => {
 
     await sessions.transfer({ sessionId: "s1", departmentId: "dept1" });
 
-    expect(mockPut).toHaveBeenCalledWith("/core/v1/session/s1/transfer", { departmentId: "dept1" });
+    expect(mockPut).toHaveBeenCalledWith("/chat/v1/session/s1/transfer", { departmentId: "dept1" });
   });
 
   it("calls PUT with both agentId and departmentId", async () => {
@@ -78,7 +78,7 @@ describe("sessions.transfer", () => {
 
     await sessions.transfer({ sessionId: "s1", agentId: "ag2", departmentId: "dept1" });
 
-    expect(mockPut).toHaveBeenCalledWith("/core/v1/session/s1/transfer", {
+    expect(mockPut).toHaveBeenCalledWith("/chat/v1/session/s1/transfer", {
       agentId: "ag2",
       departmentId: "dept1",
     });
@@ -95,12 +95,12 @@ describe("sessions.transfer", () => {
 describe("sessions.setStatus", () => {
   beforeEach(() => { mockPut.mockReset(); });
 
-  it("calls PUT /core/v1/session/{id}/status with status", async () => {
+  it("calls PUT /chat/v1/session/{id}/status with status", async () => {
     mockPut.mockResolvedValueOnce({ id: "s1", status: "pending" });
 
     await sessions.setStatus({ sessionId: "s1", status: "pending" });
 
-    expect(mockPut).toHaveBeenCalledWith("/core/v1/session/s1/status", { status: "pending" });
+    expect(mockPut).toHaveBeenCalledWith("/chat/v1/session/s1/status", { status: "pending" });
   });
 });
 
@@ -109,12 +109,12 @@ describe("sessions.setStatus", () => {
 describe("sessions.complete", () => {
   beforeEach(() => { mockPut.mockReset(); });
 
-  it("calls PUT /core/v1/session/{id}/complete with empty body", async () => {
+  it("calls PUT /chat/v1/session/{id}/complete with empty body", async () => {
     mockPut.mockResolvedValueOnce({ id: "s1", status: "closed" });
 
     await sessions.complete("s1");
 
-    expect(mockPut).toHaveBeenCalledWith("/core/v1/session/s1/complete", {});
+    expect(mockPut).toHaveBeenCalledWith("/chat/v1/session/s1/complete", {});
   });
 
   it("propagates FlwChatNotFoundError", async () => {
@@ -128,13 +128,13 @@ describe("sessions.complete", () => {
 describe("sessions.addNote", () => {
   beforeEach(() => { mockPost.mockReset(); });
 
-  it("calls POST /core/v1/session/{id}/note with text", async () => {
+  it("calls POST /chat/v1/session/{id}/note with text", async () => {
     const note = { id: "n1", text: "Cliente ligou." };
     mockPost.mockResolvedValueOnce(note);
 
     const result = await sessions.addNote({ sessionId: "s1", text: "Cliente ligou." });
 
-    expect(mockPost).toHaveBeenCalledWith("/core/v1/session/s1/note", { text: "Cliente ligou." });
+    expect(mockPost).toHaveBeenCalledWith("/chat/v1/session/s1/note", { text: "Cliente ligou." });
     expect(result).toEqual(note);
   });
 });
@@ -144,13 +144,13 @@ describe("sessions.addNote", () => {
 describe("sessions.reply", () => {
   beforeEach(() => { mockPost.mockReset(); });
 
-  it("calls POST /core/v1/session/{id}/message with text", async () => {
+  it("calls POST /chat/v1/session/{id}/message with text", async () => {
     const response = { id: "msg1", status: "sent" };
     mockPost.mockResolvedValueOnce(response);
 
     const result = await sessions.reply({ sessionId: "s1", text: "Olá, como posso ajudar?" });
 
-    expect(mockPost).toHaveBeenCalledWith("/core/v1/session/s1/message", { text: "Olá, como posso ajudar?" });
+    expect(mockPost).toHaveBeenCalledWith("/chat/v1/session/s1/message", { text: "Olá, como posso ajudar?" });
     expect(result).toEqual(response);
   });
 

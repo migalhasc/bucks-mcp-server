@@ -13,6 +13,7 @@ import { Request } from "express";
 import { config } from "./config.js";
 
 export class AuthError extends Error {
+  readonly loginUrl = "/login";
   constructor(
     message: string,
     public readonly statusCode: number = 401,
@@ -72,10 +73,18 @@ function extractBearerToken(req: Request): string {
 }
 
 /**
- * Validates the token and returns the authenticated user email.
+ * Validates the token and returns { email, flwchatToken? }.
+ * Checks session store first, then falls back to static/JWT modes.
  */
-export async function authenticate(req: Request): Promise<string> {
+export async function authenticate(req: Request): Promise<{ email: string; flwchatToken?: string }> {
   const token = extractBearerToken(req);
+
+  // Session-based auth (login page flow)
+  const { getSession } = await import("./session-store.js");
+  const session = getSession(token);
+  if (session) {
+    return { email: session.email, flwchatToken: session.flwchatToken };
+  }
 
   if (config.AUTH_MODE === "static") {
     const map = getStaticTokenMap();
@@ -83,7 +92,7 @@ export async function authenticate(req: Request): Promise<string> {
     if (!email) {
       throw new AuthError("Token inválido ou não autorizado.");
     }
-    return email;
+    return { email };
   }
 
   // JWT mode
@@ -104,7 +113,7 @@ export async function authenticate(req: Request): Promise<string> {
       );
     }
 
-    return email;
+    return { email };
   } catch (err) {
     if (err instanceof AuthError) throw err;
     throw new AuthError(

@@ -13,8 +13,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ─── Schema ────────────────────────────────────────────────────────────────
 
+const UserEntrySchema = z.union([
+  z.string(), // legacy: email: "role"
+  z.object({ role: z.string(), flwchatToken: z.string().optional() }),
+]);
+
 const RbacConfigSchema = z.object({
-  users: z.record(z.string(), z.string()),
+  users: z.record(z.string(), UserEntrySchema),
   roles: z.record(
     z.string(),
     z.object({
@@ -24,6 +29,14 @@ const RbacConfigSchema = z.object({
 });
 
 type RbacConfig = z.infer<typeof RbacConfigSchema>;
+
+function userRole(entry: z.infer<typeof UserEntrySchema>): string {
+  return typeof entry === "string" ? entry : entry.role;
+}
+
+function userFlwchatToken(entry: z.infer<typeof UserEntrySchema>): string | undefined {
+  return typeof entry === "string" ? undefined : entry.flwchatToken;
+}
 
 export type Role = "commercial" | "cs" | "admin";
 
@@ -66,18 +79,29 @@ export class RbacError extends Error {
  */
 export function resolveRole(email: string): Role {
   const cfg = loadRbacConfig();
-  const role = cfg.users[email];
-  if (!role) {
+  const entry = cfg.users[email];
+  if (!entry) {
     throw new RbacError(
       `Usuário '${email}' não encontrado na configuração de papéis. Contate o administrador para liberar acesso.`,
     );
   }
+  const role = userRole(entry);
   if (!cfg.roles[role]) {
     throw new RbacError(
       `Papel '${role}' configurado para '${email}' não existe na definição de papéis.`,
     );
   }
   return role as Role;
+}
+
+/**
+ * Returns the FlwChat token configured for a user, if any.
+ */
+export function resolveFlwchatToken(email: string): string | undefined {
+  const cfg = loadRbacConfig();
+  const entry = cfg.users[email];
+  if (!entry) return undefined;
+  return userFlwchatToken(entry);
 }
 
 /**

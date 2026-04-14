@@ -10,6 +10,8 @@ export interface RequestContext {
   req: Request;
   userEmail: string;
   userRole: string;
+  /** FlwChat bearer token for this user (from session). Falls back to service token if absent. */
+  flwchatToken?: string;
 }
 
 export const requestContext = new AsyncLocalStorage<RequestContext>();

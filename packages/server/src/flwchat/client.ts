@@ -6,6 +6,7 @@
 
 import { config } from "../config.js";
 import { logger } from "../logger.js";
+import { requestContext } from "../request-context.js";
 
 // ── Error types ───────────────────────────────────────────────────────────────
 
@@ -111,7 +112,9 @@ async function parseResponse(res: Response): Promise<unknown> {
 // ── Core request ─────────────────────────────────────────────────────────────
 
 async function executeRequest(opts: RequestOptions): Promise<unknown> {
-  const token = config.FLWCHAT_SERVICE_TOKEN;
+  // Prefer per-user token from session; fall back to global service token.
+  const ctx = requestContext.getStore();
+  const token = ctx?.flwchatToken ?? config.FLWCHAT_SERVICE_TOKEN;
   if (!token) {
     throw new FlwChatAuthError();
   }
