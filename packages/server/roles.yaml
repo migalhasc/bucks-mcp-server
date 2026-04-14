@@ -6,10 +6,30 @@ users:
   miguel@blankschool.com.br:
     role: admin
     flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
-  # Para adicionar usuários:
-  # fulano@blankschool.com.br:
-  #   role: commercial          # commercial | cs | admin
-  #   flwchatToken: pn_xxx      # token permanente do usuário no FlwChat
+  pedro@blankschool.com.br:
+    role: admin
+    flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
+  m.martins@blankschool.com.br:
+    role: cs
+    flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
+  a.barbosa@blankschool.com.br:
+    role: cs
+    flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
+  freitas@blankschool.com.br:
+    role: commercial
+    flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
+  lorenzo@blankschool.com.br:
+    role: commercial
+    flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
+  gustavo@blankschool.com.br:
+    role: commercial
+    flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
+  m.baptista@blankschool.com.br:
+    role: commercial
+    flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
+  g.silveira@blankschool.com.br:
+    role: cs
+    flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
 
 roles:
   commercial:
