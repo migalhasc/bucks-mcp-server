@@ -53,7 +53,9 @@ export interface CardNote {
 export interface CardListResponse {
   cards?: Card[];
   data?: Card[];
+  items?: Card[];
   total?: number;
+  totalItems?: number;
   page?: number;
   pageSize?: number;
 }
@@ -71,12 +73,13 @@ export interface ListCardsParams {
 
 function extractCards(raw: unknown): Card[] {
   const r = raw as CardListResponse;
-  return r.cards ?? r.data ?? [];
+  return r.items ?? r.cards ?? r.data ?? [];
 }
 
 function extractCardPage(raw: unknown, page: number, pageSize: number): PagedResult<Card> {
   const data = extractCards(raw);
-  const total = (raw as CardListResponse).total;
+  const r = raw as CardListResponse;
+  const total = r.totalItems ?? r.total;
   return { data, total, page, pageSize, hasMore: data.length === pageSize };
 }
 
@@ -108,15 +111,15 @@ export interface AddCardNoteParams {
 export const crm = {
   /** List all panels (boards). */
   async listPanels(): Promise<Panel[]> {
-    const raw = await flwchat.get<unknown>("/core/v1/panel");
+    const raw = await flwchat.get<unknown>("/crm/v1/panel");
     if (Array.isArray(raw)) return raw as Panel[];
-    const r = raw as { panels?: Panel[]; data?: Panel[] };
-    return r.panels ?? r.data ?? [];
+    const r = raw as { panels?: Panel[]; data?: Panel[]; items?: Panel[] };
+    return r.items ?? r.panels ?? r.data ?? [];
   },
 
   /** Get a single panel by ID. */
   async getPanelById(id: string): Promise<Panel> {
-    return flwchat.get<Panel>(`/core/v1/panel/${encodeURIComponent(id)}`);
+    return flwchat.get<Panel>(`/crm/v1/panel/${encodeURIComponent(id)}`);
   },
 
   /** List cards with optional filters. Auto-paginates if no page specified. */
@@ -131,12 +134,12 @@ export const crm = {
 
     if (params.page) {
       query["page"] = params.page;
-      const raw = await flwchat.get<CardListResponse>("/core/v1/panel/card", query);
-      return { cards: extractCards(raw), total: (raw as CardListResponse).total };
+      const raw = await flwchat.get<CardListResponse>("/crm/v1/panel/card", query);
+      return { cards: extractCards(raw), total: (raw as CardListResponse).totalItems ?? (raw as CardListResponse).total };
     }
 
     const all = await flwchat.fetchAllPages<Card>(
-      "/core/v1/panel/card",
+      "/crm/v1/panel/card",
       query,
       pageSize,
       (raw, pg, ps) => extractCardPage(raw, pg, ps),
@@ -146,31 +149,31 @@ export const crm = {
 
   /** Get a single card by ID. */
   async getCardById(id: string): Promise<Card> {
-    return flwchat.get<Card>(`/core/v1/panel/card/${encodeURIComponent(id)}`);
+    return flwchat.get<Card>(`/crm/v1/panel/card/${encodeURIComponent(id)}`);
   },
 
   /** List notes for a card. */
   async listCardNotes(cardId: string): Promise<CardNote[]> {
-    const raw = await flwchat.get<unknown>(`/core/v1/panel/card/${encodeURIComponent(cardId)}/note`);
+    const raw = await flwchat.get<unknown>(`/crm/v1/panel/card/${encodeURIComponent(cardId)}/note`);
     if (Array.isArray(raw)) return raw as CardNote[];
-    const r = raw as { notes?: CardNote[]; data?: CardNote[] };
-    return r.notes ?? r.data ?? [];
+    const r = raw as { notes?: CardNote[]; data?: CardNote[]; items?: CardNote[] };
+    return r.items ?? r.notes ?? r.data ?? [];
   },
 
   /** Create a new card in a panel. */
   async createCard(params: CreateCardParams): Promise<Card> {
-    return flwchat.post<Card>("/core/v1/panel/card", params);
+    return flwchat.post<Card>("/crm/v1/panel/card", params);
   },
 
   /** Update a card (includes moving between stages). */
   async updateCard(id: string, params: UpdateCardParams): Promise<Card> {
-    return flwchat.put<Card>(`/core/v2/panel/card/${encodeURIComponent(id)}`, params);
+    return flwchat.put<Card>(`/crm/v2/panel/card/${encodeURIComponent(id)}`, params);
   },
 
   /** Add a note to a card. */
   async addCardNote(params: AddCardNoteParams): Promise<CardNote> {
     return flwchat.post<CardNote>(
-      `/core/v1/panel/card/${encodeURIComponent(params.cardId)}/note`,
+      `/crm/v1/panel/card/${encodeURIComponent(params.cardId)}/note`,
       { text: params.text },
     );
   },
