@@ -71,9 +71,18 @@ export interface ListCardsParams {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/** Normalize API card: map stepId → stageId so internal code stays consistent. */
+function normalizeCard(card: Record<string, unknown>): Card {
+  if (card["stepId"] !== undefined && card["stageId"] === undefined) {
+    card["stageId"] = card["stepId"];
+  }
+  return card as unknown as Card;
+}
+
 function extractCards(raw: unknown): Card[] {
   const r = raw as CardListResponse;
-  return r.items ?? r.cards ?? r.data ?? [];
+  const cards = r.items ?? r.cards ?? r.data ?? [];
+  return cards.map((c) => normalizeCard(c as Record<string, unknown>));
 }
 
 function extractCardPage(raw: unknown, page: number, pageSize: number): PagedResult<Card> {
@@ -128,7 +137,7 @@ export const crm = {
     const query: Record<string, string | number | boolean | undefined | null> = { pageSize };
 
     if (params.panelId) query["panelId"] = params.panelId;
-    if (params.stageId) query["stageId"] = params.stageId;
+    if (params.stageId) query["stepId"] = params.stageId;
     if (params.contactId) query["contactId"] = params.contactId;
     if (params.agentId) query["agentId"] = params.agentId;
 
@@ -149,7 +158,8 @@ export const crm = {
 
   /** Get a single card by ID. */
   async getCardById(id: string): Promise<Card> {
-    return flwchat.get<Card>(`/crm/v1/panel/card/${encodeURIComponent(id)}`);
+    const raw = await flwchat.get<Record<string, unknown>>(`/crm/v1/panel/card/${encodeURIComponent(id)}`);
+    return normalizeCard(raw);
   },
 
   /** List notes for a card. */
@@ -162,12 +172,18 @@ export const crm = {
 
   /** Create a new card in a panel. */
   async createCard(params: CreateCardParams): Promise<Card> {
-    return flwchat.post<Card>("/crm/v1/panel/card", params);
+    const { stageId, ...rest } = params;
+    const raw = await flwchat.post<Record<string, unknown>>("/crm/v1/panel/card", { ...rest, stepId: stageId });
+    return normalizeCard(raw);
   },
 
   /** Update a card (includes moving between stages). */
   async updateCard(id: string, params: UpdateCardParams): Promise<Card> {
-    return flwchat.put<Card>(`/crm/v2/panel/card/${encodeURIComponent(id)}`, params);
+    const { stageId, ...rest } = params;
+    const body: Record<string, unknown> = { ...rest };
+    if (stageId !== undefined) body["stepId"] = stageId;
+    const raw = await flwchat.put<Record<string, unknown>>(`/crm/v2/panel/card/${encodeURIComponent(id)}`, body);
+    return normalizeCard(raw);
   },
 
   /** Add a note to a card. */

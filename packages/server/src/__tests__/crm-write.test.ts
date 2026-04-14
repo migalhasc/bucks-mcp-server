@@ -35,8 +35,8 @@ const { crm } = await import("../flwchat/crm.js");
 describe("crm.createCard", () => {
   beforeEach(() => { mockPost.mockReset(); });
 
-  it("calls POST /crm/v1/card with full params", async () => {
-    const card = { id: "c1", title: "Lead X", stageId: "s1" };
+  it("calls POST /crm/v1/panel/card with stepId mapped from stageId", async () => {
+    const card = { id: "c1", title: "Lead X", stepId: "s1" };
     mockPost.mockResolvedValueOnce(card);
 
     const result = await crm.createCard({
@@ -49,24 +49,24 @@ describe("crm.createCard", () => {
       tags: ["hot"],
     });
 
-    expect(mockPost).toHaveBeenCalledWith("/core/v1/panel/card", {
+    expect(mockPost).toHaveBeenCalledWith("/crm/v1/panel/card", {
       panelId: "p1",
-      stageId: "s1",
+      stepId: "s1",
       title: "Lead X",
       contactId: "ct1",
       agentId: "ag1",
       value: 1500,
       tags: ["hot"],
     });
-    expect(result).toEqual(card);
+    expect(result).toMatchObject({ id: "c1", stageId: "s1" });
   });
 
-  it("calls POST /crm/v1/card with minimal params", async () => {
+  it("calls POST /crm/v1/panel/card with minimal params", async () => {
     mockPost.mockResolvedValueOnce({ id: "c2" });
 
     await crm.createCard({ panelId: "p1", stageId: "s1" });
 
-    expect(mockPost).toHaveBeenCalledWith("/core/v1/panel/card", { panelId: "p1", stageId: "s1" });
+    expect(mockPost).toHaveBeenCalledWith("/crm/v1/panel/card", { panelId: "p1", stepId: "s1" });
   });
 
   it("propagates errors from client", async () => {
@@ -80,14 +80,14 @@ describe("crm.createCard", () => {
 describe("crm.updateCard", () => {
   beforeEach(() => { mockPut.mockReset(); });
 
-  it("calls PUT /crm/v1/card/{id} with stageId", async () => {
-    const updated = { id: "c1", stageId: "s-final" };
+  it("calls PUT /crm/v2/panel/card/{id} with stepId mapped from stageId", async () => {
+    const updated = { id: "c1", stepId: "s-final" };
     mockPut.mockResolvedValueOnce(updated);
 
     const result = await crm.updateCard("c1", { stageId: "s-final" });
 
-    expect(mockPut).toHaveBeenCalledWith("/core/v2/panel/card/c1", { stageId: "s-final" });
-    expect(result).toEqual(updated);
+    expect(mockPut).toHaveBeenCalledWith("/crm/v2/panel/card/c1", { stepId: "s-final" });
+    expect(result).toMatchObject({ id: "c1", stageId: "s-final" });
   });
 
   it("propagates FlwChatNotFoundError", async () => {
@@ -101,13 +101,13 @@ describe("crm.updateCard", () => {
 describe("crm.addCardNote", () => {
   beforeEach(() => { mockPost.mockReset(); });
 
-  it("calls POST /crm/v1/card/{cardId}/note with text", async () => {
+  it("calls POST /crm/v1/panel/card/{cardId}/note with text", async () => {
     const note = { id: "n1", text: "Follow up agendado." };
     mockPost.mockResolvedValueOnce(note);
 
     const result = await crm.addCardNote({ cardId: "c1", text: "Follow up agendado." });
 
-    expect(mockPost).toHaveBeenCalledWith("/core/v1/panel/card/c1/note", { text: "Follow up agendado." });
+    expect(mockPost).toHaveBeenCalledWith("/crm/v1/panel/card/c1/note", { text: "Follow up agendado." });
     expect(result).toEqual(note);
   });
 
