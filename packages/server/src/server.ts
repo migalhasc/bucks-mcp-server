@@ -11,6 +11,9 @@ import { registerSessionTools } from "./tools/sessions.js";
 import { registerCrmTools } from "./tools/crm.js";
 import { registerChatbotTools } from "./tools/chatbots.js";
 import { registerLookupTools } from "./tools/lookup.js";
+import { registerMessageTools } from "./tools/messages.js";
+import { registerSequenceTools } from "./tools/sequences.js";
+import { registerPortfolioTools } from "./tools/portfolios.js";
 import { authRouter } from "./routes/auth.js";
 import { oauthRouter } from "./routes/oauth.js";
 
@@ -25,6 +28,9 @@ export function createMcpServer(): McpServer {
   registerCrmTools(server);
   registerChatbotTools(server);
   registerLookupTools(server);
+  registerMessageTools(server);
+  registerSequenceTools(server);
+  registerPortfolioTools(server);
 
   return server;
 }

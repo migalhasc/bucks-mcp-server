@@ -157,4 +157,24 @@ export const contacts = {
   async updateTags(id: string, tags: string[]): Promise<Contact> {
     return flwchat.post<Contact>(`/core/v1/contact/${encodeURIComponent(id)}/tags`, { tags });
   },
+
+  /** Get a single contact by ID. */
+  async getById(id: string): Promise<Contact> {
+    return flwchat.get<Contact>(`/core/v1/contact/${encodeURIComponent(id)}`);
+  },
+
+  /** Update a contact by phone number. */
+  async updateByPhone(phone: string, params: UpdateContactParams): Promise<Contact> {
+    return flwchat.put<Contact>(`/core/v1/contact/phonenumber/${encodeURIComponent(phone)}`, params);
+  },
+
+  /** Update tags for a contact by phone number. Replaces existing tags. */
+  async updateTagsByPhone(phone: string, tags: string[]): Promise<Contact> {
+    return flwchat.post<Contact>(`/core/v1/contact/phonenumber/${encodeURIComponent(phone)}/tags`, { tags });
+  },
+
+  /** Batch save up to 100 contacts (upsert). */
+  async batchSave(contactList: unknown[]): Promise<unknown> {
+    return flwchat.post<unknown>("/core/v2/contact/batch", { contacts: contactList });
+  },
 };

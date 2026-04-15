@@ -323,6 +323,154 @@ export function registerSessionTools(server: McpServer): void {
     },
   );
 
+  // ── bucks_update_session ────────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_update_session",
+    "Atualiza parcialmente uma sessão (apenas os campos listados em 'fields'). Exige prévia e confirmação.",
+    {
+      sessionId: z.string().min(1).describe("ID da sessão"),
+      attrs: z.record(z.unknown()).describe("Campos a atualizar (chave-valor)"),
+      fields: z.array(z.string()).min(1).describe("Lista dos nomes dos campos que serão atualizados"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Atualizar sessão parcialmente",
+          alvo: `Sessão ID: ${args.sessionId}`,
+          campos: { campos: args.fields, valores: args.attrs },
+        });
+      }
+      try {
+        const result = await sessions.update(args.sessionId, args.attrs, args.fields);
+        return buildSuccess("Sessão atualizada com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Sessão '${args.sessionId}' não encontrada.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_list_session_notes ────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_list_session_notes",
+    "Lista todas as notas internas de uma sessão.",
+    {
+      sessionId: z.string().min(1).describe("ID da sessão"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return mcpError((err as Error).message);
+      }
+      try {
+        const notes = await sessions.listNotes(args.sessionId);
+        return mcpOk({ notes, count: notes.length });
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return mcpError(`Sessão '${args.sessionId}' não encontrada.`);
+        return mcpError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_get_session_note ──────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_get_session_note",
+    "Obtém uma nota interna de sessão pelo ID da nota.",
+    {
+      noteId: z.string().min(1).describe("ID da nota"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return mcpError((err as Error).message);
+      }
+      try {
+        const note = await sessions.getNote(args.noteId);
+        return mcpOk(note);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return mcpError(`Nota '${args.noteId}' não encontrada.`);
+        return mcpError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_delete_session_note ───────────────────────────────────────────────
+
+  server.tool(
+    "bucks_delete_session_note",
+    "Exclui uma nota interna de sessão. Ação irreversível — exige prévia e confirmação.",
+    {
+      noteId: z.string().min(1).describe("ID da nota a excluir"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar a exclusão"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Excluir nota de sessão",
+          alvo: `Nota ID: ${args.noteId}`,
+          aviso: "A nota será excluída permanentemente. Esta ação não pode ser desfeita.",
+        });
+      }
+      try {
+        await sessions.deleteNote(args.noteId);
+        return buildSuccess("Nota excluída com sucesso.");
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Nota '${args.noteId}' não encontrada.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_reply_session_sync ────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_reply_session_sync",
+    "Envia uma resposta de texto em uma sessão de forma síncrona (aguarda confirmação do canal, até ~25s). Exige prévia e confirmação.",
+    {
+      sessionId: z.string().min(1).describe("ID da sessão"),
+      text: z.string().min(1).describe("Texto da mensagem a enviar"),
+      confirmed: z.boolean().optional().describe("true para confirmar e enviar a mensagem"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Responder sessão (síncrono)",
+          alvo: `Sessão ID: ${args.sessionId}`,
+          campos: { mensagem: args.text },
+          aviso: "Aguarda confirmação do canal por até 25 segundos.",
+        });
+      }
+      try {
+        const result = await sessions.replySync({ sessionId: args.sessionId, text: args.text });
+        return buildSuccess("Mensagem enviada com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Sessão '${args.sessionId}' não encontrada.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
   // ── bucks_reply_session ─────────────────────────────────────────────────────
 
   server.tool(

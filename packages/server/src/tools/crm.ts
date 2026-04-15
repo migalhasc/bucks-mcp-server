@@ -325,4 +325,35 @@ export function registerCrmTools(server: McpServer): void {
       }
     },
   );
+
+  // ── bucks_duplicate_card ────────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_duplicate_card",
+    "Duplica um card existente no CRM. Exige prévia e confirmação.",
+    {
+      cardId: z.string().min(1).describe("ID do card a duplicar"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar a duplicação"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Duplicar card",
+          alvo: `Card ID: ${args.cardId}`,
+        });
+      }
+      try {
+        const result = await crm.duplicateCard(args.cardId);
+        return buildSuccess("Card duplicado com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Card '${args.cardId}' não encontrado.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
 }

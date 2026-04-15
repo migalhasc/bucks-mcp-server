@@ -33,6 +33,16 @@ function extractChatbotPage(raw: unknown): { data: Chatbot[]; hasMore: boolean; 
 }
 
 export const chatbots = {
+  /** Trigger a chatbot for a session or phone number. */
+  async sendChatbot(params: {
+    chatbotId: string;
+    sessionId?: string;
+    phone?: string;
+    channel?: string;
+  }): Promise<unknown> {
+    return flwchat.post<unknown>("/chat/v1/chatbot/send", params);
+  },
+
   /** List all chatbots / automations (auto-paginated). */
   async listChatbots(): Promise<Chatbot[]> {
     return flwchat.fetchAllPages<Chatbot>(

@@ -216,6 +216,40 @@ export const sessions = {
     });
   },
 
+  /** Partial update of a session. */
+  async update(id: string, attrs: Record<string, unknown>, fields: string[]): Promise<unknown> {
+    return flwchat.put<unknown>(
+      `/chat/v2/session/${encodeURIComponent(id)}/partial`,
+      { ...attrs, updateFields: fields },
+    );
+  },
+
+  /** List notes for a session. */
+  async listNotes(sessionId: string): Promise<unknown[]> {
+    const raw = await flwchat.get<unknown>(`/chat/v1/session/${encodeURIComponent(sessionId)}/note`);
+    if (Array.isArray(raw)) return raw;
+    const r = raw as { items?: unknown[]; notes?: unknown[]; data?: unknown[] };
+    return r.items ?? r.notes ?? r.data ?? [];
+  },
+
+  /** Get a single session note by ID. */
+  async getNote(noteId: string): Promise<unknown> {
+    return flwchat.get<unknown>(`/chat/v1/session/note/${encodeURIComponent(noteId)}`);
+  },
+
+  /** Delete a session note by ID. */
+  async deleteNote(noteId: string): Promise<void> {
+    await flwchat.delete(`/chat/v1/session/note/${encodeURIComponent(noteId)}`);
+  },
+
+  /** Reply to a session synchronously (waits up to ~25s for channel ack). */
+  async replySync(params: { sessionId: string; text: string }): Promise<unknown> {
+    return flwchat.post<unknown>(
+      `/chat/v1/session/${encodeURIComponent(params.sessionId)}/message/sync`,
+      { text: params.text },
+    );
+  },
+
   async listMessages(params: ListMessagesParams): Promise<{ messages: Message[]; total?: number }> {
     const pageSize = params.limit ?? DEFAULT_RECENT_LIMIT;
     const path = `/chat/v1/session/${encodeURIComponent(params.sessionId)}/message`;

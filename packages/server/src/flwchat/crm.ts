@@ -266,4 +266,9 @@ export const crm = {
       `/crm/v1/panel/card/${encodeURIComponent(params.cardId)}/note/${encodeURIComponent(params.noteId)}`,
     );
   },
+
+  /** Duplicate a card by ID. */
+  async duplicateCard(id: string): Promise<unknown> {
+    return flwchat.post<unknown>(`/crm/v1/panel/card/${encodeURIComponent(id)}/duplicate`, {});
+  },
 };

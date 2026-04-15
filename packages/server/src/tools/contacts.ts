@@ -229,6 +229,160 @@ export function registerContactTools(server: McpServer): void {
       }
     },
   );
+
+  // ── bucks_get_contact ───────────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_get_contact",
+    "Obtém dados completos de um contato pelo ID.",
+    {
+      id: z.string().min(1).describe("ID do contato"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return mcpError((err as Error).message);
+      }
+
+      try {
+        const contact = await contacts.getById(args.id);
+        return mcpOk(contact);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) {
+          return mcpError(`Contato com ID '${args.id}' não encontrado.`);
+        }
+        return mcpError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_update_contact_by_phone ───────────────────────────────────────────
+
+  server.tool(
+    "bucks_update_contact_by_phone",
+    "Atualiza dados de um contato pelo número de telefone (nome, email ou etiquetas). Exige prévia e confirmação.",
+    {
+      phone: z.string().describe("Telefone do contato em formato internacional (ex: +5511999999999)"),
+      name: z.string().min(1).optional().describe("Novo nome"),
+      email: z.string().email().optional().describe("Novo e-mail"),
+      tags: z.array(z.string()).optional().describe("Nova lista de etiquetas (substitui as existentes)"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar a atualização"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+
+      const campos: Record<string, unknown> = {};
+      if (args.name) campos["nome"] = args.name;
+      if (args.email) campos["email"] = args.email;
+      if (args.tags) campos["etiquetas"] = args.tags;
+
+      if (Object.keys(campos).length === 0) {
+        return buildError("Nenhum campo fornecido para atualização. Informe ao menos nome, email ou tags.");
+      }
+
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Atualizar contato por telefone",
+          alvo: args.phone,
+          campos,
+        });
+      }
+
+      try {
+        const updated = await contacts.updateByPhone(args.phone, {
+          name: args.name,
+          email: args.email,
+          tags: args.tags,
+        });
+        return buildSuccess("Contato atualizado com sucesso.", updated);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) {
+          return buildError(`Contato com telefone '${args.phone}' não encontrado.`);
+        }
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_update_contact_tags_by_phone ─────────────────────────────────────
+
+  server.tool(
+    "bucks_update_contact_tags_by_phone",
+    "Atualiza as etiquetas de um contato pelo número de telefone. Substitui todas as etiquetas atuais. Exige prévia e confirmação.",
+    {
+      phone: z.string().describe("Telefone do contato em formato internacional (ex: +5511999999999)"),
+      tags: z.array(z.string()).min(1).describe("Nova lista de etiquetas (substitui todas as existentes)"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar a atualização"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Atualizar etiquetas por telefone",
+          alvo: args.phone,
+          campos: { etiquetas: args.tags },
+          aviso: "As etiquetas atuais serão substituídas pelas novas.",
+        });
+      }
+
+      try {
+        const updated = await contacts.updateTagsByPhone(args.phone, args.tags);
+        return buildSuccess("Etiquetas atualizadas com sucesso.", updated);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) {
+          return buildError(`Contato com telefone '${args.phone}' não encontrado.`);
+        }
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_batch_save_contacts ───────────────────────────────────────────────
+
+  server.tool(
+    "bucks_batch_save_contacts",
+    "Salva em lote até 100 contatos (cria ou atualiza). Exige prévia e confirmação.",
+    {
+      contacts: z
+        .array(z.record(z.unknown()))
+        .min(1)
+        .max(100)
+        .describe("Lista de objetos de contato (máx. 100)"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar o lote"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Salvar contatos em lote",
+          alvo: `${args.contacts.length} contato(s)`,
+          campos: { quantidade: args.contacts.length },
+        });
+      }
+
+      try {
+        const result = await contacts.batchSave(args.contacts);
+        return buildSuccess(`Lote de ${args.contacts.length} contato(s) salvo com sucesso.`, result);
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+    },
+  );
 }
 
 export { buildDisambiguation };
