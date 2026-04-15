@@ -34,6 +34,8 @@ users:
 roles:
   commercial:
     allowed_tools:
+      # chatbots
+      - bucks_list_chatbots
       # contacts read
       - bucks_find_contact_by_phone
       - bucks_search_contacts
@@ -62,6 +64,8 @@ roles:
 
   cs:
     allowed_tools:
+      # chatbots
+      - bucks_list_chatbots
       # contacts read
       - bucks_find_contact_by_phone
       - bucks_search_contacts
