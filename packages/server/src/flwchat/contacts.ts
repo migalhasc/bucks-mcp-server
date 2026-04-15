@@ -111,10 +111,13 @@ export const contacts = {
         return { contacts: data, total: (raw as ContactListResponse).total };
       }
 
-      // Auto-iterate pages
-      const all = await flwchat.fetchAllPages<Contact>(
+      // Auto-iterate pages via POST (filter endpoint requires POST)
+      const filterBody: Record<string, unknown> = {};
+      if (params.name) filterBody["name"] = params.name;
+      if (params.tags?.length) filterBody["tags"] = params.tags;
+      const all = await flwchat.postAllPages<Contact>(
         "/core/v1/contact/filter",
-        {},
+        filterBody,
         pageSize,
         (raw, pg, ps) => extractPage(raw, pg, ps),
       );

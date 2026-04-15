@@ -257,4 +257,32 @@ export const flwchat = {
 
     return results;
   },
+
+  /**
+   * Iterate pages automatically via POST (for filter endpoints).
+   * Sends `pageNumber` and `pageSize` in the body each iteration.
+   */
+  async postAllPages<T>(
+    path: string,
+    baseBody: Record<string, unknown>,
+    pageSize: number,
+    extractPage: (raw: unknown, page: number, pageSize: number) => PagedResult<T>,
+  ): Promise<T[]> {
+    const results: T[] = [];
+    let page = 1;
+
+    while (page <= MAX_AUTO_PAGES) {
+      const raw = await flwchat.post(path, { ...baseBody, pageNumber: page, pageSize });
+      const paged = extractPage(raw, page, pageSize);
+      results.push(...paged.data);
+      logger.debug(
+        { path, page, fetched: paged.data.length, total: paged.total },
+        "flwchat post page fetched",
+      );
+      if (!paged.hasMore) break;
+      page++;
+    }
+
+    return results;
+  },
 };
