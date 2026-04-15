@@ -9,6 +9,7 @@ import { requestContext } from "./request-context.js";
 import { registerContactTools } from "./tools/contacts.js";
 import { registerSessionTools } from "./tools/sessions.js";
 import { registerCrmTools } from "./tools/crm.js";
+import { registerChatbotTools } from "./tools/chatbots.js";
 import { authRouter } from "./routes/auth.js";
 import { oauthRouter } from "./routes/oauth.js";
 
@@ -21,6 +22,7 @@ export function createMcpServer(): McpServer {
   registerContactTools(server);
   registerSessionTools(server);
   registerCrmTools(server);
+  registerChatbotTools(server);
 
   return server;
 }
