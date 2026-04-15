@@ -207,12 +207,23 @@ export const crm = {
     return normalizeCard(raw);
   },
 
-  /** List notes for a card. */
+  /** List notes for a card (auto-paginated). */
   async listCardNotes(cardId: string): Promise<CardNote[]> {
-    const raw = await flwchat.get<unknown>(`/crm/v1/panel/card/${encodeURIComponent(cardId)}/note`);
-    if (Array.isArray(raw)) return raw as CardNote[];
-    const r = raw as { notes?: CardNote[]; data?: CardNote[]; items?: CardNote[] };
-    return r.items ?? r.notes ?? r.data ?? [];
+    return flwchat.fetchAllPages<CardNote>(
+      `/crm/v1/panel/card/${encodeURIComponent(cardId)}/note`,
+      {},
+      50,
+      (raw, pg, ps) => {
+        let data: CardNote[];
+        if (Array.isArray(raw)) data = raw as CardNote[];
+        else {
+          const r = raw as { notes?: CardNote[]; data?: CardNote[]; items?: CardNote[] };
+          data = r.items ?? r.notes ?? r.data ?? [];
+        }
+        const hasMore = (raw as { hasMorePages?: boolean }).hasMorePages ?? data.length === ps;
+        return { data, hasMore, page: pg, pageSize: ps };
+      },
+    );
   },
 
   /** Create a new card in a panel. */
