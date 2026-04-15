@@ -136,4 +136,70 @@ export function registerPortfolioTools(server: McpServer): void {
       }
     },
   );
+
+  // ── bucks_batch_add_portfolio_contacts ──────────────────────────────────────
+
+  server.tool(
+    "bucks_batch_add_portfolio_contacts",
+    "Adiciona contatos em lote a um portfólio via filtro. Exige prévia e confirmação.",
+    {
+      portfolioId: z.string().min(1).describe("ID do portfólio"),
+      filter: z.record(z.unknown()).describe("Filtro para selecionar os contatos"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Adicionar contatos em lote ao portfólio",
+          alvo: `Portfólio ID: ${args.portfolioId}`,
+          campos: { filtro: args.filter },
+        });
+      }
+      try {
+        const result = await portfolios.batchAddContacts(args.portfolioId, args.filter);
+        return buildSuccess("Contatos adicionados em lote ao portfólio com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Portfólio '${args.portfolioId}' não encontrado.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_batch_remove_portfolio_contacts ───────────────────────────────────
+
+  server.tool(
+    "bucks_batch_remove_portfolio_contacts",
+    "Remove contatos em lote de um portfólio via filtro. Exige prévia e confirmação.",
+    {
+      portfolioId: z.string().min(1).describe("ID do portfólio"),
+      filter: z.record(z.unknown()).describe("Filtro para selecionar os contatos a remover"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Remover contatos em lote do portfólio",
+          alvo: `Portfólio ID: ${args.portfolioId}`,
+          campos: { filtro: args.filter },
+        });
+      }
+      try {
+        const result = await portfolios.batchRemoveContacts(args.portfolioId, args.filter);
+        return buildSuccess("Contatos removidos em lote do portfólio com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Portfólio '${args.portfolioId}' não encontrado.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
 }

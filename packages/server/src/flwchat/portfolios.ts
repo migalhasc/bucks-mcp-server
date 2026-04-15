@@ -78,4 +78,20 @@ export const portfolios = {
       `/core/v1/portfolio/${encodeURIComponent(portfolioId)}/contact/${encodeURIComponent(contactId)}`,
     );
   },
+
+  /** Batch add contacts to a portfolio via filter. */
+  async batchAddContacts(portfolioId: string, filter: Record<string, unknown>): Promise<unknown> {
+    return flwchat.post<unknown>(
+      `/core/v1/portfolio/${encodeURIComponent(portfolioId)}/contact/batch`,
+      { filter },
+    );
+  },
+
+  /** Batch remove contacts from a portfolio via filter. */
+  async batchRemoveContacts(portfolioId: string, filter: Record<string, unknown>): Promise<unknown> {
+    return flwchat.post<unknown>(
+      `/core/v1/portfolio/${encodeURIComponent(portfolioId)}/contact/batch-remove`,
+      { filter },
+    );
+  },
 };

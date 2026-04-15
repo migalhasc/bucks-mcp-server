@@ -79,4 +79,20 @@ export const sequences = {
       { contactId },
     );
   },
+
+  /** Batch add contacts to a sequence via filter. */
+  async batchAddContacts(sequenceId: string, filter: Record<string, unknown>): Promise<unknown> {
+    return flwchat.post<unknown>(
+      `/chat/v1/sequence/${encodeURIComponent(sequenceId)}/contact/batch`,
+      { filter },
+    );
+  },
+
+  /** Batch remove contacts from a sequence via filter. */
+  async batchRemoveContacts(sequenceId: string, filter: Record<string, unknown>): Promise<unknown> {
+    return flwchat.post<unknown>(
+      `/chat/v1/sequence/${encodeURIComponent(sequenceId)}/contact/batch-remove`,
+      { filter },
+    );
+  },
 };

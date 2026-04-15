@@ -137,4 +137,71 @@ export function registerSequenceTools(server: McpServer): void {
       }
     },
   );
+
+  // ── bucks_batch_add_sequence_contacts ───────────────────────────────────────
+
+  server.tool(
+    "bucks_batch_add_sequence_contacts",
+    "Inscreve contatos em lote em uma sequência via filtro. Exige prévia e confirmação.",
+    {
+      sequenceId: z.string().min(1).describe("ID da sequência"),
+      filter: z.record(z.unknown()).describe("Filtro para selecionar os contatos"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Inscrever contatos em lote na sequência",
+          alvo: `Sequência ID: ${args.sequenceId}`,
+          campos: { filtro: args.filter },
+        });
+      }
+      try {
+        const result = await sequences.batchAddContacts(args.sequenceId, args.filter);
+        return buildSuccess("Contatos inscritos em lote na sequência com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Sequência '${args.sequenceId}' não encontrada.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
+
+  // ── bucks_batch_remove_sequence_contacts ────────────────────────────────────
+
+  server.tool(
+    "bucks_batch_remove_sequence_contacts",
+    "Remove contatos em lote de uma sequência via filtro. Exige prévia e confirmação.",
+    {
+      sequenceId: z.string().min(1).describe("ID da sequência"),
+      filter: z.record(z.unknown()).describe("Filtro para selecionar os contatos a remover"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Remover contatos em lote da sequência",
+          alvo: `Sequência ID: ${args.sequenceId}`,
+          campos: { filtro: args.filter },
+          aviso: "As cadências ativas dos contatos serão canceladas.",
+        });
+      }
+      try {
+        const result = await sequences.batchRemoveContacts(args.sequenceId, args.filter);
+        return buildSuccess("Contatos removidos em lote da sequência com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Sequência '${args.sequenceId}' não encontrada.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
 }

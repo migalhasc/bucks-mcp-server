@@ -14,6 +14,10 @@ import { registerLookupTools } from "./tools/lookup.js";
 import { registerMessageTools } from "./tools/messages.js";
 import { registerSequenceTools } from "./tools/sequences.js";
 import { registerPortfolioTools } from "./tools/portfolios.js";
+import { registerAgentTools } from "./tools/agents.js";
+import { registerDepartmentTools } from "./tools/departments.js";
+import { registerWebhookTools } from "./tools/webhooks.js";
+import { registerScheduledMessageTools } from "./tools/scheduledMessages.js";
 import { authRouter } from "./routes/auth.js";
 import { oauthRouter } from "./routes/oauth.js";
 
@@ -31,6 +35,10 @@ export function createMcpServer(): McpServer {
   registerMessageTools(server);
   registerSequenceTools(server);
   registerPortfolioTools(server);
+  registerAgentTools(server);
+  registerDepartmentTools(server);
+  registerWebhookTools(server);
+  registerScheduledMessageTools(server);
 
   return server;
 }

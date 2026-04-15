@@ -137,4 +137,30 @@ export const lookup = {
   async getPanelCustomFields(panelId: string): Promise<CustomField[]> {
     return flwchat.get<CustomField[]>(`/crm/v1/panel/${encodeURIComponent(panelId)}/custom-fields`);
   },
+
+  // ── Office Hours ─────────────────────────────────────────────────────────────
+
+  async getOfficeHours(): Promise<unknown> {
+    return flwchat.get<unknown>("/core/v1/company/officehours");
+  },
+
+  // ── File Upload ──────────────────────────────────────────────────────────────
+
+  async getFileUploadUrl(params?: { fileName?: string; mimeType?: string }): Promise<unknown> {
+    return flwchat.get<unknown>("/core/v2/file", params as Record<string, string | undefined>);
+  },
+
+  async saveFile(params: Record<string, unknown>): Promise<unknown> {
+    return flwchat.post<unknown>("/core/v2/file", params);
+  },
+
+  // ── OTP ──────────────────────────────────────────────────────────────────────
+
+  async sendOtp(params: { phone: string; channel: string; templateId?: string }): Promise<unknown> {
+    return flwchat.post<unknown>("/chat/v1/template/otp/send", params);
+  },
+
+  async getOtpStatus(messageId: string): Promise<unknown> {
+    return flwchat.get<unknown>(`/chat/v1/template/otp/${encodeURIComponent(messageId)}/status`);
+  },
 };

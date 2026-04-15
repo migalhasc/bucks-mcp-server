@@ -22,4 +22,9 @@ export const messages = {
   async sendSync(params: { phone: string; channel?: string; text: string }): Promise<unknown> {
     return flwchat.post<unknown>("/chat/v1/message/send-sync", params);
   },
+
+  /** Delete a message by ID. */
+  async deleteMessage(id: string): Promise<unknown> {
+    return flwchat.delete<unknown>(`/chat/v1/message/${encodeURIComponent(id)}`);
+  },
 };

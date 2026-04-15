@@ -108,4 +108,37 @@ export function registerMessageTools(server: McpServer): void {
       }
     },
   );
+
+  // ── bucks_delete_message ────────────────────────────────────────────────────
+
+  server.tool(
+    "bucks_delete_message",
+    "Exclui uma mensagem permanentemente. Ação sensível e irreversível — exige prévia e confirmação.",
+    {
+      id: z.string().min(1).describe("ID da mensagem"),
+      confirmed: z.boolean().optional().describe("true para confirmar e executar"),
+    },
+    async (args) => {
+      try {
+        const { userRole } = getContext();
+      } catch (err) {
+        return buildError((err as Error).message);
+      }
+      if (!args.confirmed) {
+        return buildPreview({
+          acao: "Excluir mensagem",
+          alvo: `Mensagem ID: ${args.id}`,
+          campos: {},
+          aviso: "Esta ação é irreversível. A mensagem será permanentemente removida.",
+        });
+      }
+      try {
+        const result = await messages.deleteMessage(args.id);
+        return buildSuccess("Mensagem excluída com sucesso.", result);
+      } catch (err) {
+        if (err instanceof FlwChatNotFoundError) return buildError(`Mensagem '${args.id}' não encontrada.`);
+        return buildError((err as Error).message);
+      }
+    },
+  );
 }
