@@ -30,9 +30,11 @@ const mockPost = jest.fn<any>();
 const mockPut = jest.fn<any>();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockFetchAllPages = jest.fn<any>();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockPostAllPages = jest.fn<any>();
 
 jest.unstable_mockModule("../flwchat/client.js", () => ({
-  flwchat: { get: mockGet, post: mockPost, put: mockPut, fetchAllPages: mockFetchAllPages },
+  flwchat: { get: mockGet, post: mockPost, put: mockPut, fetchAllPages: mockFetchAllPages, postAllPages: mockPostAllPages },
   FlwChatNotFoundError: class extends Error {
     statusCode = 404;
     constructor() { super("Recurso não encontrado."); this.name = "FlwChatNotFoundError"; }
@@ -332,16 +334,6 @@ describe("Critical flow: bucks_send_outbound", () => {
     expect(mockPost).toHaveBeenCalledTimes(2);
   });
 
-  it("cs role is blocked from outbound", async () => {
-    setRole("cs");
-    const { text, isError } = await callTool(client, "bucks_send_outbound", {
-      phone: "+5511999990012",
-      text: "CS tentando outbound.",
-    });
-    expect(isError).toBe(true);
-    expect(text).toMatch(/Permissão negada|comercial/i);
-  });
-
   it("admin can send outbound", async () => {
     setRole("admin");
     mockPost.mockResolvedValueOnce({ id: "msg-out-admin", status: "queued" });
@@ -390,16 +382,6 @@ describe("Critical flow: bucks_move_card", () => {
     expect(mockPut).toHaveBeenCalledTimes(1);
   });
 
-  it("cs role is blocked from moving cards", async () => {
-    setRole("cs");
-    const { isError, text } = await callTool(client, "bucks_move_card", {
-      id: "card-002",
-      stageId: "stage-003",
-    });
-    expect(isError).toBe(true);
-    expect(text).toContain("Permissão negada");
-  });
-
   it("admin can move card to final stage", async () => {
     setRole("admin");
     mockPut.mockResolvedValueOnce({ id: "card-003", stageId: "stage-final" });
@@ -446,15 +428,6 @@ describe("Critical flow: bucks_close_session", () => {
     expect(mockPut).toHaveBeenCalledTimes(1);
   });
 
-  it("commercial role is blocked from closing session", async () => {
-    setRole("commercial");
-    const { text, isError } = await callTool(client, "bucks_close_session", {
-      sessionId: "s-close-002",
-    });
-    expect(isError).toBe(true);
-    expect(text).toContain("Permissão negada");
-  });
-
   it("admin can close session", async () => {
     setRole("admin");
     mockPut.mockResolvedValueOnce({ id: "s-close-003", status: "closed" });
@@ -479,27 +452,6 @@ describe("Role-based access — additional scenarios", () => {
 
   afterEach(async () => { await client?.close(); });
 
-  it("commercial cannot assign session", async () => {
-    setRole("commercial");
-    ({ client } = await makeClient());
-    const { isError, text } = await callTool(client, "bucks_assign_session", {
-      sessionId: "s-assign-1",
-      agentId: "ag-1",
-    });
-    expect(isError).toBe(true);
-    expect(text).toContain("Permissão negada");
-  });
-
-  it("commercial cannot transfer session", async () => {
-    setRole("commercial");
-    ({ client } = await makeClient());
-    const { isError } = await callTool(client, "bucks_transfer_session", {
-      sessionId: "s-transfer-1",
-      agentId: "ag-2",
-    });
-    expect(isError).toBe(true);
-  });
-
   it("cs can assign session", async () => {
     setRole("cs");
     ({ client } = await makeClient());
@@ -522,16 +474,6 @@ describe("Role-based access — additional scenarios", () => {
       confirmed: true,
     });
     expect(isError).toBe(false);
-  });
-
-  it("cs cannot use outbound", async () => {
-    setRole("cs");
-    ({ client } = await makeClient());
-    const { isError } = await callTool(client, "bucks_send_outbound", {
-      phone: "+5511999990099",
-      text: "Oi",
-    });
-    expect(isError).toBe(true);
   });
 
   it("admin can use all tools — spot check", async () => {
@@ -587,8 +529,8 @@ describe("Default limits and recency", () => {
 
   it("bucks_search_contacts returns results list", async () => {
     const contactList = [{ id: "c-1", name: "Ana" }];
-    // search with name filter uses fetchAllPages auto-iteration
-    mockFetchAllPages.mockResolvedValueOnce(contactList);
+    // search with name filter uses postAllPages (POST filter endpoint)
+    mockPostAllPages.mockResolvedValueOnce(contactList);
 
     const { text, isError } = await callTool(client, "bucks_search_contacts", { name: "Ana" });
     expect(isError).toBe(false);

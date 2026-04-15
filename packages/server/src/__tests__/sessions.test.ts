@@ -130,29 +130,36 @@ describe("sessions.getById", () => {
 // ── sessions.listMessages ─────────────────────────────────────────────────────
 
 describe("sessions.listMessages", () => {
-  beforeEach(() => { mockGet.mockReset(); });
+  beforeEach(() => { mockGet.mockReset(); mockFetchAllPages.mockReset(); });
 
   it("applies default 24h window when no after/page given", async () => {
-    mockGet.mockResolvedValueOnce({ messages: [], total: 0 });
+    mockFetchAllPages.mockResolvedValueOnce([]);
 
     await sessions.listMessages({ sessionId: "s1" });
 
-    const callArgs = mockGet.mock.calls[0][1] as Record<string, unknown>;
-    expect(callArgs["after"]).toBeDefined();
+    expect(mockFetchAllPages).toHaveBeenCalledWith(
+      "/chat/v1/session/s1/message",
+      expect.objectContaining({ after: expect.any(String) }),
+      expect.any(Number),
+      expect.any(Function),
+    );
+    const callArgs = mockFetchAllPages.mock.calls[0][1] as Record<string, unknown>;
     const after = new Date(callArgs["after"] as string);
     const expected = new Date(Date.now() - DEFAULT_RECENCY_HOURS * 60 * 60 * 1000);
     expect(Math.abs(after.getTime() - expected.getTime())).toBeLessThan(5000);
   });
 
   it("uses explicit after when provided", async () => {
-    mockGet.mockResolvedValueOnce({ messages: [{ id: "m1" }], total: 1 });
+    mockFetchAllPages.mockResolvedValueOnce([{ id: "m1" }]);
     const after = "2026-01-01T00:00:00.000Z";
 
     const result = await sessions.listMessages({ sessionId: "s1", after });
 
-    expect(mockGet).toHaveBeenCalledWith(
+    expect(mockFetchAllPages).toHaveBeenCalledWith(
       "/chat/v1/session/s1/message",
       expect.objectContaining({ after }),
+      expect.any(Number),
+      expect.any(Function),
     );
     expect(result.messages).toHaveLength(1);
   });
@@ -163,17 +170,20 @@ describe("sessions.listMessages", () => {
     await sessions.listMessages({ sessionId: "s1", page: 2 });
 
     const callArgs = mockGet.mock.calls[0][1] as Record<string, unknown>;
-    expect(callArgs["page"]).toBe(2);
-    // When page is explicit, no auto-after should be added
+    expect(callArgs["pageNumber"]).toBe(2);
     expect(callArgs["after"]).toBeUndefined();
   });
 
   it("respects custom limit", async () => {
-    mockGet.mockResolvedValueOnce({ data: [], total: 0 });
+    mockFetchAllPages.mockResolvedValueOnce([]);
 
     await sessions.listMessages({ sessionId: "s1", limit: 5 });
 
-    const callArgs = mockGet.mock.calls[0][1] as Record<string, unknown>;
-    expect(callArgs["pageSize"]).toBe(5);
+    expect(mockFetchAllPages).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(Object),
+      5,
+      expect.any(Function),
+    );
   });
 });

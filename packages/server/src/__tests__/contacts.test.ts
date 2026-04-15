@@ -13,6 +13,8 @@ const mockGet = jest.fn<any>();
 const mockPost = jest.fn<any>();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockFetchAllPages = jest.fn<any>();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockPostAllPages = jest.fn<any>();
 
 class MockFlwChatNotFoundError extends Error {
   statusCode = 404;
@@ -24,6 +26,7 @@ jest.unstable_mockModule("../flwchat/client.js", () => ({
     get: mockGet,
     post: mockPost,
     fetchAllPages: mockFetchAllPages,
+    postAllPages: mockPostAllPages,
   },
   FlwChatNotFoundError: MockFlwChatNotFoundError,
   FlwChatAuthError: class extends Error { constructor() { super("Auth error"); } },
@@ -64,6 +67,7 @@ describe("contacts.search", () => {
     mockGet.mockReset();
     mockPost.mockReset();
     mockFetchAllPages.mockReset();
+    mockPostAllPages.mockReset();
   });
 
   it("uses GET list with auto-pagination when no filters", async () => {
@@ -80,14 +84,14 @@ describe("contacts.search", () => {
     expect(result.contacts).toHaveLength(1);
   });
 
-  it("uses fetchAllPages with POST filter path when name provided", async () => {
-    mockFetchAllPages.mockResolvedValueOnce([{ id: "2", name: "João", phone: "+55" }]);
+  it("uses postAllPages with POST filter path when name provided", async () => {
+    mockPostAllPages.mockResolvedValueOnce([{ id: "2", name: "João", phone: "+55" }]);
 
     const result = await contacts.search({ name: "João" });
 
-    expect(mockFetchAllPages).toHaveBeenCalledWith(
+    expect(mockPostAllPages).toHaveBeenCalledWith(
       "/core/v1/contact/filter",
-      {},
+      expect.objectContaining({ name: "João" }),
       50,
       expect.any(Function),
     );
