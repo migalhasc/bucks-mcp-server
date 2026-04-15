@@ -12,8 +12,6 @@ import {
   buildError,
   buildSuccess,
 } from "../confirmation.js";
-import { assertToolAllowed, RbacError } from "../rbac.js";
-
 // ─── Confirmation model consistency ─────────────────────────────────────────
 
 describe("Preview model — format consistency", () => {
@@ -169,52 +167,6 @@ describe("Disambiguation — uniform format across domains", () => {
   });
 });
 
-// ─── RBAC enforcement for sensitive tools ───────────────────────────────────
-
-describe("RBAC — sensitive tool access control", () => {
-  // Sensitive CS-only tools
-  const sensitiveCSTools = ["bucks_transfer_session", "bucks_close_session", "bucks_assign_session"];
-
-  it("commercial cannot use sensitive CS tools", () => {
-    for (const tool of sensitiveCSTools) {
-      expect(() => assertToolAllowed("commercial", tool)).toThrow(RbacError);
-    }
-  });
-
-  it("cs CAN use sensitive CS tools", () => {
-    for (const tool of sensitiveCSTools) {
-      expect(() => assertToolAllowed("cs", tool)).not.toThrow();
-    }
-  });
-
-  it("admin can use all sensitive tools", () => {
-    const allSensitive = [...sensitiveCSTools, "bucks_send_outbound"];
-    for (const tool of allSensitive) {
-      expect(() => assertToolAllowed("admin", tool)).not.toThrow();
-    }
-  });
-
-  it("cs cannot use outbound (commercial-only sensitive tool)", () => {
-    expect(() => assertToolAllowed("cs", "bucks_send_outbound")).toThrow(RbacError);
-    expect(() => assertToolAllowed("cs", "bucks_send_outbound")).toThrow(/Permissão negada/);
-  });
-
-  it("commercial cannot use close or transfer session", () => {
-    expect(() => assertToolAllowed("commercial", "bucks_close_session")).toThrow(RbacError);
-    expect(() => assertToolAllowed("commercial", "bucks_transfer_session")).toThrow(RbacError);
-  });
-
-  it("error message mentions 'Permissão negada' for all blocked sensitive actions", () => {
-    const blocked = [
-      { role: "commercial" as const, tool: "bucks_close_session" },
-      { role: "commercial" as const, tool: "bucks_transfer_session" },
-      { role: "cs" as const, tool: "bucks_send_outbound" },
-    ];
-    for (const { role, tool } of blocked) {
-      expect(() => assertToolAllowed(role, tool)).toThrow(/Permissão negada/);
-    }
-  });
-});
 
 // ─── Error and success response format ──────────────────────────────────────
 

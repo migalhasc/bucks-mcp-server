@@ -5,7 +5,6 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { chatbots } from "../flwchat/chatbots.js";
-import { assertToolAllowed } from "../rbac.js";
 import { requestContext } from "../request-context.js";
 import { buildError } from "../confirmation.js";
 
@@ -29,7 +28,6 @@ export function registerChatbotTools(server: McpServer): void {
     async () => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_list_chatbots");
       } catch (err) {
         return buildError((err as Error).message);
       }

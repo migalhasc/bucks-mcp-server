@@ -1,6 +1,6 @@
 import { Router, Request, Response, IRouter } from "express";
 import { createSession, createPermanentToken } from "../session-store.js";
-import { resolveRole, resolveFlwchatToken, RbacError } from "../rbac.js";
+import { assertRegisteredEmail, resolveFlwchatToken, RbacError } from "../rbac.js";
 import { logger } from "../logger.js";
 
 export const authRouter: IRouter = Router();
@@ -30,9 +30,8 @@ authRouter.post("/auth/login", async (req: Request, res: Response) => {
     return;
   }
 
-  let role: string;
   try {
-    role = resolveRole(email);
+    assertRegisteredEmail(email);
   } catch (err) {
     if (err instanceof RbacError) {
       res.status(403).json({ error: `Acesso não autorizado para '${email}'. Contate o administrador.` });
@@ -49,10 +48,10 @@ authRouter.post("/auth/login", async (req: Request, res: Response) => {
     return;
   }
 
-  const sessionToken = createSession(email, role, flwchatToken);
-  logger.info({ email, role }, "session created via login");
+  const sessionToken = createSession(email, "user", flwchatToken);
+  logger.info({ email }, "session created via login");
 
-  res.json({ token: sessionToken, email, role, expiresIn: "8h" });
+  res.json({ token: sessionToken, email, expiresIn: "8h" });
 });
 
 // ── POST /auth/token ──────────────────────────────────────────────────────────
@@ -71,9 +70,8 @@ authRouter.post("/auth/token", async (req: Request, res: Response) => {
     return;
   }
 
-  let role: string;
   try {
-    role = resolveRole(email);
+    assertRegisteredEmail(email);
   } catch (err) {
     if (err instanceof RbacError) {
       res.status(403).json({ error: `Acesso não autorizado para '${email}'.` });
@@ -88,10 +86,10 @@ authRouter.post("/auth/token", async (req: Request, res: Response) => {
     return;
   }
 
-  const permanentToken = createPermanentToken(email, role, flwchatToken);
-  logger.info({ email, role }, "permanent token created");
+  const permanentToken = createPermanentToken(email, "user", flwchatToken);
+  logger.info({ email }, "permanent token created");
 
-  res.json({ token: permanentToken, email, role, expiresIn: "never" });
+  res.json({ token: permanentToken, email, expiresIn: "never" });
 });
 
 // ── HTML ──────────────────────────────────────────────────────────────────────

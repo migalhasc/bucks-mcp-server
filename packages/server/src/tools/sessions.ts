@@ -11,14 +11,11 @@ import { z } from "zod";
 import { sessions, DEFAULT_RECENCY_HOURS, DEFAULT_RECENT_LIMIT, DEFAULT_LIST_LIMIT } from "../flwchat/sessions.js";
 import { contacts } from "../flwchat/contacts.js";
 import { FlwChatNotFoundError } from "../flwchat/client.js";
-import { assertToolAllowed } from "../rbac.js";
 import { requestContext } from "../request-context.js";
 import { buildPreview, buildSuccess, buildError } from "../confirmation.js";
 import {
-  assertOutboundAllowed,
   validateOutboundInput,
   buildOutboundPreview,
-  OutboundPolicyError,
 } from "../outbound-policy.js";
 import { config } from "../config.js";
 
@@ -54,7 +51,6 @@ export function registerSessionTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_list_sessions");
       } catch (err) {
         return mcpError((err as Error).message);
       }
@@ -96,7 +92,6 @@ export function registerSessionTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_get_session");
       } catch (err) {
         return mcpError((err as Error).message);
       }
@@ -127,7 +122,6 @@ export function registerSessionTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_list_messages");
       } catch (err) {
         return mcpError((err as Error).message);
       }
@@ -166,7 +160,6 @@ export function registerSessionTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_assign_session");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -201,7 +194,6 @@ export function registerSessionTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_transfer_session");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -246,7 +238,6 @@ export function registerSessionTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_set_session_status");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -279,7 +270,6 @@ export function registerSessionTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_close_session");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -313,7 +303,6 @@ export function registerSessionTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_add_session_note");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -347,7 +336,6 @@ export function registerSessionTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_reply_session");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -395,19 +383,10 @@ export function registerSessionTools(server: McpServer): void {
       confirmed: z.boolean().optional().describe("true para confirmar e executar o envio"),
     },
     async (args) => {
-      // Role check
       const ctx = (() => {
         try { return getContext(); } catch { return null; }
       })();
       if (!ctx) return buildError("Contexto de requisição não disponível.");
-
-      try {
-        assertOutboundAllowed(ctx.userRole as "commercial" | "cs" | "admin");
-        assertToolAllowed(ctx.userRole as "commercial" | "cs" | "admin", "bucks_send_outbound");
-      } catch (err) {
-        if (err instanceof OutboundPolicyError) return buildError(err.message);
-        return buildError((err as Error).message);
-      }
 
       const defaultChannel = config.DEFAULT_CHANNEL;
       const input = {

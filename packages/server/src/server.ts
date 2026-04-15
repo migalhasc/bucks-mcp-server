@@ -4,7 +4,7 @@ import express, { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 import { logger } from "./logger.js";
 import { authenticate, AuthError } from "./auth.js";
-import { resolveRole, RbacError } from "./rbac.js";
+import { assertRegisteredEmail, RbacError } from "./rbac.js";
 import { requestContext } from "./request-context.js";
 import { registerContactTools } from "./tools/contacts.js";
 import { registerSessionTools } from "./tools/sessions.js";
@@ -55,7 +55,8 @@ export function createApp(mcpServer: McpServer): express.Application {
       const auth = await authenticate(req);
       userEmail = auth.email;
       flwchatToken = auth.flwchatToken;
-      userRole = resolveRole(userEmail);
+      assertRegisteredEmail(userEmail);
+      userRole = "user";
     } catch (err) {
       if (err instanceof AuthError) {
         logger.warn({ requestId, err: err.message }, "auth failed");

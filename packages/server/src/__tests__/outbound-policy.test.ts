@@ -1,7 +1,6 @@
 import { describe, it, expect } from "@jest/globals";
 import {
   isValidPhone,
-  assertOutboundAllowed,
   validateOutboundInput,
   buildOutboundPreview,
   OutboundPolicyError,
@@ -22,17 +21,6 @@ describe("isValidPhone", () => {
   });
 });
 
-describe("assertOutboundAllowed", () => {
-  it("allows commercial and admin", () => {
-    expect(() => assertOutboundAllowed("commercial")).not.toThrow();
-    expect(() => assertOutboundAllowed("admin")).not.toThrow();
-  });
-
-  it("blocks cs", () => {
-    expect(() => assertOutboundAllowed("cs")).toThrow(OutboundPolicyError);
-    expect(() => assertOutboundAllowed("cs")).toThrow(/cs.*não pode iniciar outbound/i);
-  });
-});
 
 describe("validateOutboundInput", () => {
   const base = {

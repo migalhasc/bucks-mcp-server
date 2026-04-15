@@ -10,7 +10,6 @@ import { z } from "zod";
 import { crm } from "../flwchat/crm.js";
 import { FlwChatNotFoundError } from "../flwchat/client.js";
 import { DEFAULT_LIST_LIMIT } from "../flwchat/sessions.js";
-import { assertToolAllowed } from "../rbac.js";
 import { requestContext } from "../request-context.js";
 import { buildPreview, buildSuccess, buildError } from "../confirmation.js";
 
@@ -34,7 +33,6 @@ export function registerCrmTools(server: McpServer): void {
     async () => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_list_boards");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -64,7 +62,6 @@ export function registerCrmTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_list_cards");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -97,7 +94,6 @@ export function registerCrmTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_get_card");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -139,7 +135,6 @@ export function registerCrmTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_create_card");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -194,7 +189,6 @@ export function registerCrmTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_update_card");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -242,7 +236,6 @@ export function registerCrmTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_move_card");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -279,7 +272,6 @@ export function registerCrmTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_add_card_note");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -313,7 +305,6 @@ export function registerCrmTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_delete_card_note");
       } catch (err) {
         return buildError((err as Error).message);
       }

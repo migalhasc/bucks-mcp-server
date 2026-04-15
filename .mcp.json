@@ -1,3 +1,11 @@
 {
-  "mcpServers": {}
+  "mcpServers": {
+    "bucks": {
+      "type": "http",
+      "url": "https://bucks-mcp.ngrok.dev/mcp",
+      "headers": {
+        "Authorization": "Bearer 2a1a750338a9237d0d65afc0de16535c59cbc8f638912745effd47eeb41a0eed"
+      }
+    }
+  }
 }

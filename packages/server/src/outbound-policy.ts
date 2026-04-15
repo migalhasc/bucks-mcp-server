@@ -10,7 +10,6 @@
  */
 
 import { buildPreview, buildError, McpResult } from "./confirmation.js";
-import type { Role } from "./rbac.js";
 
 // ─── Phone validation ────────────────────────────────────────────────────────
 
@@ -21,25 +20,10 @@ export function isValidPhone(phone: string): boolean {
   return PHONE_RE.test(phone.replace(/\s/g, ""));
 }
 
-// ─── Role check ──────────────────────────────────────────────────────────────
-
-const OUTBOUND_ALLOWED_ROLES: Role[] = ["commercial", "admin"];
-
 export class OutboundPolicyError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "OutboundPolicyError";
-  }
-}
-
-/**
- * Throws OutboundPolicyError if the role is not allowed to initiate outbound.
- */
-export function assertOutboundAllowed(role: Role): void {
-  if (!OUTBOUND_ALLOWED_ROLES.includes(role)) {
-    throw new OutboundPolicyError(
-      `Permissão negada: o papel '${role}' não pode iniciar outbound.`,
-    );
   }
 }
 

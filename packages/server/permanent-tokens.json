@@ -1,0 +1,22 @@
+[
+  [
+    "2a1a750338a9237d0d65afc0de16535c59cbc8f638912745effd47eeb41a0eed",
+    {
+      "email": "miguel@blankschool.com.br",
+      "role": "admin",
+      "flwchatToken": "pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q",
+      "createdAt": 1776132087794,
+      "expiresAt": 9007199254740991
+    }
+  ],
+  [
+    "5bd65bfa34ceeac9f2eede89012ef4a16ce74401cb8efbb74c827f94388aedd0",
+    {
+      "email": "miguel@blankschool.com.br",
+      "role": "admin",
+      "flwchatToken": "pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q",
+      "createdAt": 1776132309068,
+      "expiresAt": 9007199254740991
+    }
+  ]
+]

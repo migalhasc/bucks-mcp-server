@@ -1,90 +1,23 @@
-# RBAC configuration for bucks-mcp-server v1
-# Map user emails to roles and define tool permissions per role.
-# Roles: commercial, cs, admin
+# bucks-mcp-server access list
+# All registered emails have full access to all tools.
+# Fields: flwchatToken (required)
 
 users:
   miguel@blankschool.com.br:
-    role: admin
     flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
   pedro@blankschool.com.br:
-    role: admin
     flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
   m.martins@blankschool.com.br:
-    role: cs
     flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
   a.barbosa@blankschool.com.br:
-    role: cs
     flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
   freitas@blankschool.com.br:
-    role: commercial
     flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
   lorenzo@blankschool.com.br:
-    role: commercial
     flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
   gustavo@blankschool.com.br:
-    role: commercial
     flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
   m.baptista@blankschool.com.br:
-    role: commercial
     flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
   g.silveira@blankschool.com.br:
-    role: cs
     flwchatToken: pn_h1sdk1b9e6EEo9yM5QmDy2VZG2ijELoV8ludN68Q
-
-roles:
-  commercial:
-    allowed_tools:
-      # chatbots
-      - bucks_list_chatbots
-      # contacts read
-      - bucks_find_contact_by_phone
-      - bucks_search_contacts
-      # contacts write
-      - bucks_create_contact
-      - bucks_update_contact
-      - bucks_update_contact_tags
-      # sessions read
-      - bucks_list_sessions
-      - bucks_get_session
-      - bucks_list_messages
-      # session reply
-      - bucks_reply_session
-      # outbound
-      - bucks_send_outbound
-      # crm read
-      - bucks_list_boards
-      - bucks_list_cards
-      - bucks_get_card
-      # crm write
-      - bucks_create_card
-      - bucks_update_card
-      - bucks_move_card
-      - bucks_add_card_note
-      - bucks_delete_card_note
-
-  cs:
-    allowed_tools:
-      # chatbots
-      - bucks_list_chatbots
-      # contacts read
-      - bucks_find_contact_by_phone
-      - bucks_search_contacts
-      # sessions read
-      - bucks_list_sessions
-      - bucks_get_session
-      - bucks_list_messages
-      # session reply
-      - bucks_reply_session
-      # session ops
-      - bucks_assign_session
-      - bucks_transfer_session
-      - bucks_set_session_status
-      - bucks_close_session
-      - bucks_add_session_note
-      # crm read
-      - bucks_list_boards
-      - bucks_list_cards
-      - bucks_get_card
-
-  admin:
-    allowed_tools: "*"  # all tools

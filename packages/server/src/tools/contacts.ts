@@ -8,7 +8,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { contacts } from "../flwchat/contacts.js";
 import { FlwChatNotFoundError } from "../flwchat/client.js";
-import { assertToolAllowed } from "../rbac.js";
 import { requestContext } from "../request-context.js";
 import { buildPreview, buildSuccess, buildError, buildDisambiguation } from "../confirmation.js";
 
@@ -38,7 +37,6 @@ export function registerContactTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_find_contact_by_phone");
       } catch (err) {
         return mcpError((err as Error).message);
       }
@@ -67,7 +65,6 @@ export function registerContactTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_search_contacts");
       } catch (err) {
         return mcpError((err as Error).message);
       }
@@ -105,7 +102,6 @@ export function registerContactTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_create_contact");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -154,7 +150,6 @@ export function registerContactTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_update_contact");
       } catch (err) {
         return buildError((err as Error).message);
       }
@@ -210,7 +205,6 @@ export function registerContactTools(server: McpServer): void {
     async (args) => {
       try {
         const { userRole } = getContext();
-        assertToolAllowed(userRole as "commercial" | "cs" | "admin", "bucks_update_contact_tags");
       } catch (err) {
         return buildError((err as Error).message);
       }

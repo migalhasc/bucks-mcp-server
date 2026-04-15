@@ -1,97 +1,146 @@
-# Ubiquitous Language
+# Ubiquitous Language — bucks-mcp-server
 
-## Core domain
+---
 
-| Term | Definition | Aliases to avoid |
-| --- | --- | --- |
-| **Bucks** | O produto interno que expõe o acesso ao CRM/WhatsApp via MCP para o time da Blank School. | Projeto, integração |
-| **FlwChat** | A plataforma upstream de CRM e WhatsApp cuja API é usada pelo Bucks. | Bucks, CRM |
-| **CRM** | O conjunto de dados e fluxos comerciais/atendimento operados sobre contatos, sessões e cards na FlwChat. | Sistema, plataforma |
-| **MCP remoto** | O servidor remoto compatível com clientes MCP que intermedeia comandos do LLM para a FlwChat. | Bot, plugin |
-| **Cliente MCP** | A aplicação usada pela pessoa do time para conversar com o MCP, como Claude ou ChatGPT. | App, chat |
-| **LLM** | O modelo que interpreta a intenção do usuário e decide quais tools MCP chamar. | IA, assistente |
+## Plataforma e infraestrutura
 
-## People and access
+| Termo | Definição | Aliases a evitar |
+|-------|-----------|-----------------|
+| **FlwChat** | Plataforma SaaS de CRM e atendimento via WhatsApp (também chamada WTS), cujos dados o MCP expõe. | WTS, wts.chat |
+| **MCP** | Servidor remoto que traduz linguagem natural em operações sobre a FlwChat via protocolo Model Context Protocol. | bucks-mcp, servidor, API própria |
+| **Tool** | Função individual exposta pelo MCP, prefixada `bucks_`, que o cliente LLM pode invocar. | comando, endpoint MCP, função |
+| **Cliente LLM** | Aplicação que consome o MCP (Claude Code, Claude Desktop, Cursor, etc.). | cliente, app, front |
+| **Token de serviço** | Credencial FlwChat (`pn_…`) usada pelo backend do MCP para todas as chamadas upstream. | chave de API, service key |
+| **Token permanente** | Credencial MCP gerada por email/senha em `/login`, sem expiração, usada pelo cliente LLM no header `Authorization`. | token de acesso, bearer |
+| **`roles.yaml`** | Arquivo de configuração que lista emails autorizados a usar o MCP e seus tokens FlwChat associados. Não define papéis ou restrições de tools. | RBAC config, permissões |
 
-| Term | Definition | Aliases to avoid |
-| --- | --- | --- |
-| **Usuário** | A identidade autenticada no MCP por OAuth. | Conta, login |
-| **Admin** | O usuário com acesso a todas as tools da v1. | Superusuário |
-| **Commercial** | O papel focado em prospecção, follow-up, contatos, sessões e cards comerciais. | Vendas, SDR |
-| **CS** | O papel focado em atendimento, continuidade operacional e fechamento de sessões. | Suporte, atendimento |
-| **RBAC** | O conjunto de regras que define quais ações cada papel pode executar no MCP. | Permissão simples |
-| **Token de serviço** | O token único de backend usado pelo MCP para falar com a API da FlwChat. | Token do usuário |
+---
 
-## Contacts and conversations
+## Pessoas e acesso
 
-| Term | Definition | Aliases to avoid |
-| --- | --- | --- |
-| **Contato** | A pessoa cadastrada no CRM com telefone e dados de identificação. | Lead, cliente, usuário |
-| **Lead** | Um contato em contexto comercial antes de qualificação ou avanço no pipeline. | Contato, card |
-| **Sessão** | A conversa operacional existente entre um contato e a operação na FlwChat. | Atendimento, ticket, chat |
-| **Mensagem** | Um item individual trocado dentro de uma sessão ou disparado via canal. | Interação |
-| **Mensagem outbound** | Uma mensagem iniciada ativamente pela equipe para um contato. | Disparo, campanha |
-| **Resposta de sessão** | Uma mensagem enviada dentro de uma sessão já existente. | Outbound |
-| **Nota interna** | Um registro textual interno vinculado a uma sessão e não visível ao contato. | Observação |
-| **Mensagem recente** | Uma mensagem retornada por consulta com janela temporal curta, por padrão últimas 24 horas. | Última mensagem |
+| Termo | Definição | Aliases a evitar |
+|-------|-----------|-----------------|
+| **Usuário** | Pessoa do time Blank School com email cadastrado em `roles.yaml`, com acesso irrestrito a todas as tools. | agente MCP, operador, role |
+| **Agente** | Usuário humano cadastrado na FlwChat, responsável por atender sessões. Retornado por `GET /core/v1/agent`. | atendente, operador (no contexto FlwChat) |
+| **Email autorizado** | Email listado em `roles.yaml` — único critério de acesso ao MCP. | role, papel, permissão |
 
-## Channels and CRM pipeline
+---
 
-| Term | Definition | Aliases to avoid |
-| --- | --- | --- |
-| **Canal** | O número ou origem operacional usada para comunicação via WhatsApp. | Conta, linha |
-| **Canal padrão** | O canal global assumido pelo MCP quando o pedido não especifica um canal. | Canal principal |
-| **Painel** | O board do CRM que organiza cards por etapas. | Pipeline, quadro |
-| **Card** | O registro comercial ou operacional que representa uma oportunidade ou item do pipeline. | Lead, oportunidade |
-| **Etapa** | A coluna ou status de avanço de um card dentro de um painel. | Fase, estágio |
-| **Painel padrão** | O painel global assumido pelo MCP quando o pedido não especifica um painel. | Pipeline principal |
-| **Etiqueta** | Um marcador aplicado a um contato para segmentação e operação. | Tag, label |
-| **Origem** | O campo inicial que indica de onde o contato ou lead veio. | Source, proveniência |
+## Contatos
 
-## Operational safeguards
+| Termo | Definição | Aliases a evitar |
+|-------|-----------|-----------------|
+| **Contato** | Pessoa física ou empresa cadastrada na FlwChat com telefone, nome e metadados. | lead (evitar como substituto geral), cliente |
+| **Lead** | Contato em fase de prospecção comercial ativa. Subconjunto de Contato, não sinônimo. | contato (quando se quer dizer lead especificamente) |
+| **Etiqueta** | Tag associada a um contato para segmentação e filtros. Retornada por `GET /core/v1/tag`. | tag, label |
+| **Campo customizado** | Atributo adicional definido pela conta FlwChat para contatos ou cards, além dos campos padrão. | custom field, campo extra |
 
-| Term | Definition | Aliases to avoid |
-| --- | --- | --- |
-| **Preview de escrita** | A prévia estruturada da mudança que o MCP mostra antes de executar uma escrita. | Simulação, resumo |
-| **Confirmação explícita** | A autorização textual imediata necessária para executar a próxima escrita previewada. | OK implícito |
-| **Ação sensível** | Uma escrita com risco operacional maior que exige preview mais explícito. | Ação crítica |
-| **Desambiguação** | O passo em que o MCP apresenta candidatos quando não há alvo único suficiente para escrita. | Tentativa automática |
-| **Consulta recente** | Uma leitura com janela padrão curta e limite menor de itens. | Busca rápida |
-| **Default global** | A configuração comum do servidor usada quando o pedido não informa canal, painel ou outros parâmetros opcionais. | Padrão implícito |
+---
 
-## Relationships
+## Sessões e mensagens
 
-- Um **Usuário** autentica no **MCP remoto** e opera segundo um papel de **RBAC**.
-- O **MCP remoto** usa um **Token de serviço** para falar com a **FlwChat**.
+| Termo | Definição | Aliases a evitar |
+|-------|-----------|-----------------|
+| **Sessão** | Conversa ativa ou histórica entre um contato e a equipe, num canal específico. Identificada por ID. | atendimento (quando se refere à entidade técnica), chat |
+| **Atendimento** | Sinônimo aceitável de Sessão no contexto de CS e operação. | conversa (ambíguo) |
+| **Mensagem** | Unidade de comunicação dentro de uma sessão, de entrada ou saída. | texto, chat, envio |
+| **Mensagem outbound** | Mensagem iniciada pelo time para um contato fora de uma sessão ativa, enviada via `POST /chat/v1/message/send`. | disparo, proativo |
+| **Resposta de sessão** | Mensagem enviada dentro de uma sessão existente via `POST /chat/v1/session/{id}/message`. | reply, resposta |
+| **Nota interna** | Anotação visível apenas para a equipe, não enviada ao contato, associada a uma sessão ou card. | observação, comentário interno |
+| **Canal** | Integração de canal de comunicação configurada na FlwChat (ex: WhatsApp, Instagram). Retornado por `GET /chat/v1/channel`. | integração, número |
+| **Envio assíncrono** | Envio de mensagem enfileirado — retorna imediatamente, status consultado depois via `bucks_get_message_status`. | send, envio padrão |
+| **Envio síncrono** | Envio que aguarda confirmação do canal por até 25s antes de retornar. | send-sync, sync send |
+
+---
+
+## Chatbots e automações
+
+| Termo | Definição | Aliases a evitar |
+|-------|-----------|-----------------|
+| **Chatbot** | Fluxo automatizado de atendimento configurado na FlwChat, disparável via API. Listado por `GET /chat/v1/chatbot`. | bot, automação (quando se refere especificamente ao chatbot FlwChat) |
+| **Disparo de chatbot** | Ação de iniciar a execução de um chatbot numa sessão via `POST /chat/v1/chatbot/send`. Bloqueia interação de agentes durante a execução. | ativar bot, rodar automação |
+| **Sequência** | Cadência de mensagens programadas associadas a contatos, configurada na FlwChat. Listada por `GET /chat/v1/sequence`. | drip, cadência, automação (evitar como sinônimo geral) |
+| **Template** | Modelo de mensagem aprovado pelo canal (ex: WhatsApp Business), necessário para outbound fora da janela de 24h. Listado por `GET /chat/v1/template`. | modelo, mensagem pré-aprovada |
+
+---
+
+## CRM
+
+| Termo | Definição | Aliases a evitar |
+|-------|-----------|-----------------|
+| **Painel** | Board do CRM FlwChat que contém etapas e cards. Retornado por `GET /crm/v1/panel`. | board, funil, pipeline (como substituto da entidade) |
+| **Etapa** | Coluna dentro de um painel, representando um estágio do pipeline. Identificada por `stageId` (internamente) / `stepId` (API FlwChat). | stage, coluna, passo |
+| **Card** | Oportunidade ou negociação registrada num painel, associada a contato, etapa e responsável. | deal, oportunidade (quando se refere à entidade técnica) |
+| **Carteira** | Agrupamento de contatos por responsável comercial na FlwChat. Listada por `GET /core/v1/portfolio`. | portfólio, carteira de clientes |
+
+---
+
+## Operação do MCP
+
+| Termo | Definição | Aliases a evitar |
+|-------|-----------|-----------------|
+| **Preview** | Resposta descritiva retornada por uma tool de escrita quando chamada sem `confirmed: true`. Mostra o que será feito antes de executar. | dry-run, simulação |
+| **Confirmação** | Segunda chamada com `confirmed: true` que executa a escrita após o preview ser aceito. | confirmar, ok, executar |
+| **Ação sensível** | Escrita com impacto elevado ou irreversível que exige preview reforçado (ex: disparo de chatbot, batch de contatos, remoção de sequência). | ação crítica, operação perigosa |
+| **Desambiguação** | Retorno de até 5 candidatos quando uma busca retorna múltiplos alvos possíveis para uma escrita, impedindo que o MCP escolha sozinho. | resolução de conflito, seleção |
+| **Paginação** | Iteração automática de páginas pelo MCP usando `pageNumber` + `pageSize`, limitada a 5 páginas por chamada. | cursor, offset, scroll |
+| **`pageNumber`** | Parâmetro de paginação esperado pela API FlwChat (1-based). Diferente de `page` — usar `pageNumber`. | page, offset |
+| **Equipe** | Departamento configurado na FlwChat, usado para transferências de sessão. Retornado por `GET /core/v2/department`. | departamento, time, squad |
+
+---
+
+## Mapeamento de campos (FlwChat API)
+
+Campos cujos nomes diferem entre o código interno e a API FlwChat:
+
+| Campo interno | Campo na API FlwChat | Contexto |
+|---------------|---------------------|----------|
+| `stageId` | `stepId` | Criação e atualização de card |
+| `agentId` | `responsibleUserId` | Card |
+| `contactId` | `contactIds` (array) | Card |
+| `value` | `monetaryAmount` | Card |
+| `tags` | `tagIds` | Card |
+| `customFields` | `customFieldValues` | Card |
+
+---
+
+## Relacionamentos
+
 - Um **Contato** pode ter zero ou mais **Sessões**.
-- Uma **Sessão** contém zero ou mais **Mensagens** e zero ou mais **Notas internas**.
-- Uma **Mensagem outbound** pode iniciar uma **Sessão** nova ou ocorrer fora de uma sessão prévia, dependendo do fluxo aceito pela FlwChat.
-- Uma **Resposta de sessão** sempre pertence a exatamente uma **Sessão**.
-- Um **Card** pertence a exatamente um **Painel**.
-- Um **Card** ocupa exatamente uma **Etapa** por vez dentro de um **Painel**.
-- Um **Contato** pode estar associado a zero ou mais **Cards**, conforme o fluxo de CRM adotado.
-- Um **Canal padrão** e um **Painel padrão** são **Defaults globais** do servidor.
-- Toda escrita exige **Preview de escrita** seguido de **Confirmação explícita**.
-- Toda **Ação sensível** exige uma versão reforçada de **Preview de escrita**.
+- Uma **Sessão** pertence a exatamente um **Contato** e um **Canal**.
+- Um **Card** pertence a exatamente um **Painel** e uma **Etapa**.
+- Um **Card** pode estar associado a um **Contato** e a um **Agente** responsável.
+- Um **Chatbot** é disparado numa **Sessão** — bloqueia agentes enquanto executa.
+- Uma **Sequência** contém zero ou mais **Contatos**.
+- Uma **Carteira** contém zero ou mais **Contatos**.
+- Um **Email autorizado** em `roles.yaml` tem acesso a todas as **Tools** do MCP.
 
-## Example dialogue
+---
 
-> **Dev:** "Quando o comercial pede para falar com um lead novo, eu devo criar um **Card** primeiro ou um **Contato**?"
+## Exemplo de diálogo
 
-> **Domain expert:** "Primeiro um **Contato**. O **Card** representa a oportunidade no **Painel**, mas a comunicação sempre parte de um **Contato**."
+> **Dev:** "O usuário pediu pra 'mandar mensagem pro Pedro'. Como o MCP trata isso?"
 
-> **Dev:** "E se já existir uma **Sessão** aberta com esse **Contato**, isso ainda é **Mensagem outbound**?"
+> **Domínio:** "Primeiro faz **desambiguação** — busca contatos com esse nome e retorna até 5 candidatos. Se houver só um Pedro, vai direto pro **preview**."
 
-> **Domain expert:** "Não. Aí é **Resposta de sessão**. **Mensagem outbound** é quando a equipe inicia o envio."
+> **Dev:** "E se Pedro não tiver **sessão** ativa?"
 
-> **Dev:** "Se houver dois contatos com nomes parecidos, o MCP escolhe um sozinho?"
+> **Domínio:** "Aí é **mensagem outbound**. Precisa de **template** aprovado se a janela de 24h expirou. O MCP mostra o **preview** com canal e template antes de executar."
 
-> **Domain expert:** "Nunca para escrita. Ele deve abrir **Desambiguação** e pedir **Confirmação explícita** só depois do alvo certo."
+> **Dev:** "Se o usuário quiser disparar um **chatbot** no Pedro depois disso?"
 
-## Flagged ambiguities
+> **Domínio:** "É uma **ação sensível** — o **disparo de chatbot** bloqueia os **agentes** da **sessão** durante a execução. O MCP sempre pede **confirmação** reforçada antes."
 
-- "**Bucks**" e "**FlwChat**" apareceram como se fossem o mesmo sistema. Recomendação: usar **Bucks** para o produto interno/MCP e **FlwChat** para a plataforma upstream.
-- "**Sessão**" e "**Atendimento**" foram usados quase como sinônimos. Recomendação: padronizar **Sessão** como termo canônico do domínio e reservar “atendimento” para linguagem mais informal.
-- "**Contato**", "**Lead**" e "**Card**" podem ser confundidos. Recomendação: **Contato** é a pessoa cadastrada, **Lead** é o contexto comercial desse contato, e **Card** é o registro do pipeline.
-- "**Mensagem outbound**" e "**Resposta de sessão**" não devem ser misturados. Recomendação: usar **Mensagem outbound** para envio iniciado pela equipe e **Resposta de sessão** para continuidade de conversa existente.
-- "**Usuário**" e "**Contato**" representam entidades diferentes. Recomendação: **Usuário** é quem autentica no MCP; **Contato** é a pessoa do CRM/WhatsApp.
+> **Dev:** "O card do Pedro no painel de vendas usa `stageId` ou `stepId`?"
+
+> **Domínio:** "Internamente sempre `stageId`. A API FlwChat recebe `stepId` — o domain module faz o mapeamento automaticamente. O **usuário** nunca vê essa distinção."
+
+---
+
+## Ambiguidades identificadas
+
+- **"automação"** foi usada para **Chatbot** e para **Sequência** — são entidades distintas. Usar o termo específico.
+- **"agente"** pode significar o **Agente FlwChat** (atendente humano) ou um **agente de IA** (LLM). No contexto deste projeto, **Agente** sempre se refere ao humano na FlwChat.
+- **"role"** foi eliminado como conceito operacional. `roles.yaml` mantém o nome do arquivo por compatibilidade, mas não define papéis — define **emails autorizados**.
+- **"envio"** é ambíguo entre **envio assíncrono** (padrão) e **envio síncrono** (`-sync`). Especificar sempre quando a distinção importar.
+- **"board"** e **"painel"** coexistem no código (`bucks_list_boards` vs. domain term **Painel**). O nome da tool usa "board" por legado; o vocabulário canônico é **Painel**.

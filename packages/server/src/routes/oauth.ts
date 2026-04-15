@@ -8,7 +8,7 @@ import { Router, Request, Response, IRouter } from "express";
 import express from "express";
 import { randomBytes, randomUUID } from "node:crypto";
 import { createPermanentToken } from "../session-store.js";
-import { resolveRole, resolveFlwchatToken, RbacError } from "../rbac.js";
+import { assertRegisteredEmail, resolveFlwchatToken, RbacError } from "../rbac.js";
 import { logger } from "../logger.js";
 
 export const oauthRouter: IRouter = Router();
@@ -77,9 +77,8 @@ oauthRouter.post("/authorize", (req: Request, res: Response) => {
     return;
   }
 
-  let role: string;
   try {
-    role = resolveRole(email);
+    assertRegisteredEmail(email);
   } catch (err) {
     if (err instanceof RbacError) {
       res.status(403).setHeader("Content-Type", "text/html; charset=utf-8");
@@ -100,12 +99,12 @@ oauthRouter.post("/authorize", (req: Request, res: Response) => {
   authCodes.set(code, {
     clientId: client_id,
     email,
-    role,
+    role: "user",
     redirectUri: redirect_uri,
     expiresAt: Date.now() + 5 * 60 * 1000,
   });
 
-  logger.info({ email, role, clientId: client_id }, "oauth code issued");
+  logger.info({ email, clientId: client_id }, "oauth code issued");
 
   const url = new URL(redirect_uri);
   url.searchParams.set("code", code);
