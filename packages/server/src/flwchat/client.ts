@@ -244,7 +244,7 @@ export const flwchat = {
     let page = 1;
 
     while (page <= MAX_AUTO_PAGES) {
-      const raw = await flwchat.get(path, { ...baseQuery, page, pageSize });
+      const raw = await flwchat.get(path, { ...baseQuery, pageNumber: page, pageSize });
       const paged = extractPage(raw, page, pageSize);
       results.push(...paged.data);
       logger.debug(
