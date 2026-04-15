@@ -217,18 +217,36 @@ export const sessions = {
   },
 
   async listMessages(params: ListMessagesParams): Promise<{ messages: Message[]; total?: number }> {
-    const limit = params.limit ?? DEFAULT_RECENT_LIMIT;
-    const query: Record<string, string | number | boolean | undefined | null> = { pageSize: limit };
+    const pageSize = params.limit ?? DEFAULT_RECENT_LIMIT;
+    const path = `/chat/v1/session/${encodeURIComponent(params.sessionId)}/message`;
 
-    if (!params.after && !params.page) query["after"] = isoHoursAgo(DEFAULT_RECENCY_HOURS);
-    if (params.after) query["after"] = params.after;
-    if (params.page)  query["page"]  = params.page;
+    if (params.page) {
+      const query: Record<string, string | number | boolean | undefined | null> = {
+        pageSize,
+        pageNumber: params.page,
+      };
+      if (params.after) query["after"] = params.after;
+      const raw = await flwchat.get<MessageListResponse>(path, query);
+      const r = raw as MessageListResponse;
+      return { messages: extractMessages(raw), total: r.totalItems ?? r.total };
+    }
 
-    const raw = await flwchat.get<MessageListResponse>(
-      `/chat/v1/session/${encodeURIComponent(params.sessionId)}/message`,
-      query,
+    const baseQuery: Record<string, string | number | boolean | undefined | null> = {};
+    if (!params.after) baseQuery["after"] = isoHoursAgo(DEFAULT_RECENCY_HOURS);
+    else baseQuery["after"] = params.after;
+
+    const all = await flwchat.fetchAllPages<Message>(
+      path,
+      baseQuery,
+      pageSize,
+      (raw, pg, ps) => {
+        const data = extractMessages(raw);
+        const r = raw as MessageListResponse;
+        const total = r.totalItems ?? r.total;
+        const hasMore = (raw as { hasMorePages?: boolean }).hasMorePages ?? data.length === ps;
+        return { data, hasMore, total, page: pg, pageSize: ps };
+      },
     );
-    const r = raw as MessageListResponse;
-    return { messages: extractMessages(raw), total: r.totalItems ?? r.total };
+    return { messages: all };
   },
 };
