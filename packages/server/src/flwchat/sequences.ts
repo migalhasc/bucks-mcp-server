@@ -74,8 +74,8 @@ export const sequences = {
 
   /** Remove a contact from a sequence. */
   async removeContact(sequenceId: string, contactId: string): Promise<unknown> {
-    return flwchat.post<unknown>(
-      `/chat/v1/sequence/${encodeURIComponent(sequenceId)}/contact/remove`,
+    return flwchat.delete<unknown>(
+      `/chat/v1/sequence/${encodeURIComponent(sequenceId)}/contact`,
       { contactId },
     );
   },
@@ -90,8 +90,8 @@ export const sequences = {
 
   /** Batch remove contacts from a sequence via filter. */
   async batchRemoveContacts(sequenceId: string, filter: Record<string, unknown>): Promise<unknown> {
-    return flwchat.post<unknown>(
-      `/chat/v1/sequence/${encodeURIComponent(sequenceId)}/contact/batch-remove`,
+    return flwchat.delete<unknown>(
+      `/chat/v1/sequence/${encodeURIComponent(sequenceId)}/contact/batch`,
       { filter },
     );
   },

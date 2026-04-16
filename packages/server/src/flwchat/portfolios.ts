@@ -75,7 +75,8 @@ export const portfolios = {
   /** Remove a contact from a portfolio. */
   async removeContact(portfolioId: string, contactId: string): Promise<unknown> {
     return flwchat.delete<unknown>(
-      `/core/v1/portfolio/${encodeURIComponent(portfolioId)}/contact/${encodeURIComponent(contactId)}`,
+      `/core/v1/portfolio/${encodeURIComponent(portfolioId)}/contact`,
+      { contactId },
     );
   },
 
@@ -89,8 +90,8 @@ export const portfolios = {
 
   /** Batch remove contacts from a portfolio via filter. */
   async batchRemoveContacts(portfolioId: string, filter: Record<string, unknown>): Promise<unknown> {
-    return flwchat.post<unknown>(
-      `/core/v1/portfolio/${encodeURIComponent(portfolioId)}/contact/batch-remove`,
+    return flwchat.delete<unknown>(
+      `/core/v1/portfolio/${encodeURIComponent(portfolioId)}/contact/batch`,
       { filter },
     );
   },

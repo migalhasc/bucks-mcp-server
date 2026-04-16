@@ -224,9 +224,9 @@ export const flwchat = {
     return executeRequest({ method: "PATCH", path, body, safe: false }) as Promise<T>;
   },
 
-  /** DELETE — not retried */
-  delete<T = unknown>(path: string): Promise<T> {
-    return executeRequest({ method: "DELETE", path, safe: false }) as Promise<T>;
+  /** DELETE — not retried; optional body for endpoints that require it */
+  delete<T = unknown>(path: string, body?: Record<string, unknown>): Promise<T> {
+    return executeRequest({ method: "DELETE", path, body, safe: false }) as Promise<T>;
   },
 
   /**
